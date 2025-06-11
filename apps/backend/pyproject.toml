@@ -1,0 +1,41 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "black>=25.1.0",
+    "debugpy>=1.8.12",
+    "fastapi>=0.115.8",
+    "fastapi-sessions>=0.3.2",
+    "mypy>=1.15.0",
+    "psycopg2-binary>=2.9.10",
+    "pytest>=8.3.5",
+    "python-dotenv>=1.0.1",
+    "redis>=5.2.1",
+    "requests>=2.31.0",
+    "ruff>=0.9.10",
+    "sqlmodel>=0.0.24",
+    "uvicorn>=0.34.0",
+    "passlib>=1.7.4",
+    "python-jose>=3.3.0",
+    "python-multipart>=0.0.6",
+    "bcrypt>=4.0.1",
+    "email-validator>=2.0.0",
+    "pyjwt>=2.10.1",
+    "alembic>=1.15.1",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+
+[tool.ruff]
+line-length = 88
+lint.select = ["E", "F", "I"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true

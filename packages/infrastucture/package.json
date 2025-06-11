@@ -1,0 +1,15 @@
+{
+  "name": "infrastructure",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "prepare-db": "node scripts/prepare-db.js",
+    "regenerate-db-script": "rm -f init-db.sql && node scripts/prepare-db.js",
+    "dev": "pnpm run prepare-db && docker compose up -d",
+    "start": "pnpm run prepare-db && docker compose up -d",
+    "stop": "docker compose down"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  }
+}

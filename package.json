@@ -1,0 +1,20 @@
+{
+  "name": "monorepo-template",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check-types": "turbo run check-types",
+    "infra:start": "pnpm --filter infrastructure start",
+    "infra:stop": "pnpm --filter infrastructure stop"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.2",
+    "typescript": "5.7.3"
+  },
+  "packageManager": "pnpm@10.6.5",
+  "engines": {
+    "node": ">=18"
+  }
+}

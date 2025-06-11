@@ -1,0 +1,14 @@
+-- Enable pgvector extension
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Create a superuser if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${DB_USER}') THEN
+    CREATE USER ${DB_USER} SUPERUSER;
+  END IF;
+END
+$$;
+
+-- Make sure the user owns the database
+ALTER DATABASE "${DB_NAME}" OWNER TO ${DB_USER}; 

@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Primary Colors */
+    --primary: 260deg 86% 60%; /* #7B3FF2 */
+    --primary-hover: 260deg 67% 51%; /* #6A35D0 */
+    --primary-light: 260deg 100% 96%; /* #F0EBFF */
+    --primary-rgb: 123, 63, 242; /* RGB values for rgba() usage */
+
+    /* Background Colors */
+    --background: 220deg 100% 98%; /* #F8F9FE */
+    --card: 0deg 0% 100%; /* #FFFFFF */
+    --popover: 0deg 0% 100%; /* #FFFFFF */
+
+    /* Text Colors */
+    --foreground: 220deg 13% 13%; /* #1F2937 */
+    --muted-foreground: 220deg 9% 46%; /* #6B7280 */
+    --light-foreground: 220deg 9% 65%; /* #9CA3AF */
+    --popover-foreground: 220deg 13% 13%; /* #1F2937 */
+    --card-foreground: 220deg 13% 13%; /* #1F2937 */
+
+    /* Border Colors */
+    --border: 220deg 13% 91%; /* #E5E7EB */
+    --input: 220deg 13% 91%; /* #E5E7EB */
+    --ring: 260deg 86% 60%; /* #7B3FF2 */
+
+    /* Accent Colors */
+    --accent: 260deg 100% 96%; /* #F0EBFF */
+    --accent-foreground: 260deg 86% 60%; /* #7B3FF2 */
+
+    /* Success/Error Colors */
+    --success: 142deg 72% 29%; /* #10B981 */
+    --error: 0deg 84% 60%; /* #EF4444 */
+    --destructive: 0deg 84% 60%; /* #EF4444 */
+    --destructive-foreground: 0deg 0% 100%; /* #FFFFFF */
+
+    /* Secondary Colors */
+    --secondary: 260deg 100% 96%; /* #F0EBFF - Light purple */
+    --secondary-foreground: 260deg 86% 60%; /* #7B3FF2 */
+
+    /* Muted Colors */
+    --muted: 220deg 14% 96%; /* #F3F4F6 */
+
+    /* Neutral Colors */
+    --neutral-50: 210deg 20% 98%; /* #F9FAFB */
+    --neutral-100: 220deg 14% 96%; /* #F3F4F6 */
+    --neutral-200: 220deg 13% 91%; /* #E5E7EB */
+    --neutral-300: 216deg 12% 84%; /* #D1D5DB */
+    --neutral-400: 218deg 11% 65%; /* #9CA3AF */
+    --neutral-500: 220deg 9% 46%; /* #6B7280 */
+    --neutral-600: 215deg 14% 34%; /* #4B5563 */
+    --neutral-700: 215deg 25% 27%; /* #374151 */
+    --neutral-800: 217deg 33% 17%; /* #1F2937 */
+    --neutral-900: 222deg 47% 11%; /* #111827 */
+
+    /* Radius */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222deg 47% 11%; /* #111827 */
+    --foreground: 210deg 20% 98%; /* #F9FAFB */
+
+    --card: 217deg 33% 17%; /* #1F2937 */
+    --card-foreground: 210deg 20% 98%; /* #F9FAFB */
+
+    --popover: 217deg 33% 17%; /* #1F2937 */
+    --popover-foreground: 210deg 20% 98%; /* #F9FAFB */
+
+    --primary: 260deg 86% 60%; /* #7B3FF2 - Keep primary the same */
+    --primary-foreground: 0deg 0% 100%; /* #FFFFFF */
+
+    --secondary: 260deg 40% 20%; /* Darker version of secondary */
+    --secondary-foreground: 210deg 20% 98%; /* #F9FAFB */
+
+    --muted: 217deg 33% 17%; /* #1F2937 */
+    --muted-foreground: 215deg 14% 65%; /* Lighter version for dark mode */
+
+    --accent: 260deg 40% 20%; /* Darker version of accent */
+    --accent-foreground: 210deg 20% 98%; /* #F9FAFB */
+
+    --destructive: 0deg 84% 60%; /* #EF4444 - Keep error the same */
+    --destructive-foreground: 210deg 20% 98%; /* #F9FAFB */
+
+    --border: 215deg 25% 27%; /* #374151 */
+    --input: 215deg 25% 27%; /* #374151 */
+    --ring: 260deg 86% 60%; /* #7B3FF2 */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-bold text-foreground;
+  }
+
+  p {
+    @apply text-muted-foreground;
+  }
+
+  a {
+    @apply text-primary transition-colors;
+  }
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .bg-primary-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--primary-hover)) 100%
+    );
+  }
+
+  .bg-features-gradient {
+    background: linear-gradient(
+      135deg,
+      rgba(var(--primary-rgb), 0.1) 0%,
+      rgba(255, 255, 255, 0.8) 50%,
+      rgba(10, 175, 156, 0.1) 100%
+    );
+  }
+
+  .text-gradient {
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-image: linear-gradient(
+      to right,
+      hsl(var(--primary)),
+      hsl(var(--primary-hover))
+    );
+  }
+
+  .animate-pulse-custom {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+}

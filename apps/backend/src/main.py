@@ -1,11 +1,10 @@
-from fastapi import FastAPI
-from contextlib import asynccontextmanager
-from src.configs.database_config import init_db
-import os
-from src.user.model import User
-from src.auth.router import auth_router
-from fastapi.middleware.cors import CORSMiddleware
 import logging
+import os
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from src.auth.router import auth_router
 
 # Configure logging
 logging.basicConfig(
@@ -15,13 +14,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def database_lifespan(app: FastAPI):
-    init_db()
-    yield
-
-
-app = FastAPI(title="Template API", version="0.0.1", lifespan=database_lifespan)
+app = FastAPI(title="Template API", version="0.0.1")
 
 # Add CORS middleware
 app.add_middleware(

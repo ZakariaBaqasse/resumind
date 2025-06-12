@@ -1,8 +1,8 @@
 import os
-from sqlmodel import create_engine, Session, SQLModel
-from sqlalchemy.schema import CreateSchema
-from sqlalchemy import inspect
 
+from sqlalchemy import inspect
+from sqlalchemy.schema import CreateSchema
+from sqlmodel import Session, SQLModel, create_engine
 
 # Get database URL from environment
 DATABASE_URL = os.environ.get("DATABASE_URL")

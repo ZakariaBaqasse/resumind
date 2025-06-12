@@ -1,23 +1,19 @@
 import os
+import sys
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-import sys
+import alembic_postgresql_enum
+import sqlmodel
+from alembic import context
+from sqlalchemy import engine_from_config, pool
 from sqlmodel import SQLModel
 
-from alembic import context
-
-# Add your project to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import all your SQLModel models
 from src.user.model import User
 
-# Import other models...
-
-# Make sure target_metadata includes SQLModel metadata
-target_metadata = SQLModel.metadata
+# Import other models here...
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -28,6 +24,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+target_metadata = SQLModel.metadata
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
@@ -53,7 +50,6 @@ def run_migrations_offline() -> None:
 
     Calls to context.execute() here emit the given string to the
     script output.
-
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
@@ -63,6 +59,8 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         include_schemas=True,
         compare_type=True,
+        # This is crucial for SQLModel type support
+        user_module_prefix=None,
     )
 
     with context.begin_transaction():
@@ -74,7 +72,6 @@ def run_migrations_online() -> None:
 
     In this scenario we need to create an Engine
     and associate a connection with the context.
-
     """
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
@@ -88,6 +85,8 @@ def run_migrations_online() -> None:
             target_metadata=target_metadata,
             include_schemas=True,
             compare_type=True,
+            # This is crucial for SQLModel type support
+            user_module_prefix=None,
         )
 
         with context.begin_transaction():

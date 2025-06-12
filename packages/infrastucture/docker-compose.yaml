@@ -8,14 +8,14 @@ services:
       timeout: 3s
       retries: 10
     volumes:
-      - ${DB_NAME:-app}-postgres-data:/var/lib/postgresql
+      - resumind-postgres-data:/var/lib/postgresql
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
       POSTGRES_USER: ${DB_USER:-root}
       POSTGRES_DB: ${DB_NAME:-app}
     ports:
-      - "54321:5432"
+      - "${DB_PORT:-54322}:5432"
   redis:
     image: redis:7
     restart: always
@@ -29,5 +29,4 @@ services:
       timeout: 10s
       retries: 10
 volumes:
-  app-postgres-data:
-    name: ${DB_NAME:-app}-postgres-data
+  resumind-postgres-data:

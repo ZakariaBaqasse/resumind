@@ -5,7 +5,7 @@ import GoogleProvider from "next-auth/providers/google"
 
 import { placeholderImage } from "./lib/utils"
 
-// Extend Session types to include id in user
+// Extend NextAuth types
 declare module "next-auth" {
   interface Session {
     user: {
@@ -13,7 +13,18 @@ declare module "next-auth" {
       email?: string | null
       image?: string | null
       id?: string
+      initialResume?: string | null
     }
+    token?: string
+  }
+
+  interface User {
+    id: string
+    email: string
+    name?: string
+    image?: string
+    initialResume?: string | null
+    token?: string
   }
 }
 
@@ -50,20 +61,19 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
+          const backendUrl = new URL(process.env.NEXT_PUBLIC_API_URL!)
+          backendUrl.pathname = "/auth/credentials-login"
           // Call your backend API
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/auth/credentials-login`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-              },
-              body: new URLSearchParams({
-                username: credentials.email, // Note: backend expects 'username' not 'email'
-                password: credentials.password,
-              }),
-            }
-          )
+          const response = await fetch(backendUrl.toString(), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: new URLSearchParams({
+              username: credentials.email, // Note: backend expects 'username' not 'email'
+              password: credentials.password,
+            }),
+          })
 
           if (!response.ok) {
             const errorText = await response.text()
@@ -72,7 +82,6 @@ export const authOptions: NextAuthOptions = {
           }
 
           const data = await response.json()
-          console.log("DATA: ", data)
           // Return user data in the format NextAuth expects
           return {
             id: data.user.id,
@@ -94,19 +103,18 @@ export const authOptions: NextAuthOptions = {
       // Handle Google provider
       if (account?.provider === "google") {
         try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/auth/google-signin`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                id_token: account.id_token,
-                access_token: account.access_token,
-              }),
-            }
-          )
+          const backendUrl = new URL(process.env.NEXT_PUBLIC_API_URL!)
+          backendUrl.pathname = "/auth/google-signin"
+          const response = await fetch(backendUrl.toString(), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              id_token: account.id_token,
+              access_token: account.access_token,
+            }),
+          })
 
           if (!response.ok) {
             const errorText = await response.text()
@@ -141,10 +149,11 @@ export const authOptions: NextAuthOptions = {
       if (user && (user as any).token) {
         ;(token as any).customToken = (user as any).token
         // Store user data from credentials login
-        token.name = user.name
-        token.email = user.email
-        token.picture = user.image
+        token.name = user.name || null
+        token.email = user.email || null
+        token.picture = user.image || null
         token.sub = user.id
+        token.initialResume = (user as any).initialResume || null // Store initial resume if available
       }
 
       return token
@@ -167,11 +176,12 @@ export const authOptions: NextAuthOptions = {
         // The token already has all user data from the JWT callback
         session.user = {
           ...session.user,
-          id: token.sub, // User ID is stored in token.sub
-          name: token.name,
-          email: token.email,
+          id: token.sub || "", // User ID is stored in token.sub
+          name: token.name || null,
+          email: token.email || null,
           image:
             token.picture || (token.sub ? placeholderImage(token.sub) : null),
+          initialResume: (token as any).initialResume || null,
         }
       }
 

@@ -1,7 +1,8 @@
 from typing import List, Optional
+
 from sqlmodel import Session, select
+
 from src.user.model import User
-from uuid import UUID
 
 
 class UserRepository:
@@ -38,6 +39,7 @@ class UserRepository:
         Returns:
             The user if found, None otherwise
         """
+        self.session.expire_all()
         statement = select(User).where(User.id == user_id)
         results = self.session.exec(statement)
         return results.first()

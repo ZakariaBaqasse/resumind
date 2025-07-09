@@ -16,17 +16,5 @@ services:
       POSTGRES_DB: ${DB_NAME:-app}
     ports:
       - "${DB_PORT:-54322}:5432"
-  redis:
-    image: redis:7
-    restart: always
-    command: >
-      --requirepass ${REDIS_AUTH:-myredissecret}
-    ports:
-      - 63790:6379
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 3s
-      timeout: 10s
-      retries: 10
 volumes:
   resumind-postgres-data:

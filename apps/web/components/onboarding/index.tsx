@@ -23,7 +23,7 @@ export default function Onboarding() {
               height={40}
             />
           </div>
-          <div className="text-sm text-gray-500">{`Step ${step || "1"} of 3`}</div>
+          <div className="text-sm text-gray-500">{`Step ${step || "1"} of 2`}</div>
         </div>
       </div>
       {(!step || parseInt(step!) === 1) && <ResumeUpload />}

@@ -9,7 +9,7 @@ const personalInfoSchema = z.object({
   phone_number: z.string().min(1, "Phone number is required"),
   address: z.string().min(1, "Address is required"),
   summary: z.string().min(1, "Summary is required"),
-  age: z.number().min(2, "Please enter a valid age").optional().nullable(),
+  age: z.string().min(2, "Please enter a valid age").optional().nullable(),
   professional_title: z
     .string()
     .min(5, "Please enter a valid professional title"),
@@ -79,8 +79,8 @@ export const resumeSchema = z.object({
   educations: z.array(educationSchema).min(1, "Add at least one education"),
   skills: z.array(skillSchema).min(1, "Add at least one skill"),
   awards: z.array(awardSchema).nullable().optional(),
-  certifications: z.array(certificationSchema),
-  projects: z.array(projectSchema),
+  certifications: z.array(certificationSchema).nullable().optional(),
+  projects: z.array(projectSchema).nullable().optional(),
   hobbies: z
     .array(z.string().min(1, "Hobby is required"))
     .nullable()

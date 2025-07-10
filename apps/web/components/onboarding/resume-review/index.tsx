@@ -1,39 +1,18 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { ResumeFormType, resumeSchema } from "@/schema/resume.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
-import {
-  ArrowRight,
-  Briefcase,
-  CheckCircle,
-  Code,
-  GraduationCap,
-  Loader2,
-  Plus,
-  User,
-  X,
-} from "lucide-react"
+import { CheckCircle, Loader2, Save } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useFieldArray, useForm } from "react-hook-form"
-import * as z from "zod"
 
-import { PersonalInfo, Resume } from "@/types/resume.types"
-import { Badge } from "@/components/ui/badge"
+import { Resume } from "@/types/resume.types"
+import { USER_BACKEND_ROUTES } from "@/lib/routes"
+import { useSaveResume } from "@/hooks/onboarding/use-save-resume"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
+import { Form } from "@/components/ui/form"
 
 import { AwardsForm } from "./awards-form"
 import { CertificationsForm } from "./certifications-form"
@@ -52,6 +31,7 @@ export default function ResumeReview() {
     "Analyzing your resume..."
   )
   const { data: session } = useSession()
+  const router = useRouter()
 
   // Simulate SSE connection and data reception
   useEffect(() => {
@@ -72,7 +52,7 @@ export default function ResumeReview() {
     }, 1500)
 
     const url = new URL(process.env.NEXT_PUBLIC_API_URL!)
-    url.pathname = `/user/resume-status/${session?.token}`
+    url.pathname = `${USER_BACKEND_ROUTES.getResumeStatus}/${session?.token}`
     const eventSource = new EventSource(url.toString())
     eventSource.onmessage = (message: MessageEvent) => {
       const data = JSON.parse(message.data)
@@ -81,6 +61,7 @@ export default function ResumeReview() {
       if (data.status === "complete") {
         setIsLoading(false)
         setResume(data.resume)
+        eventSource.close()
       }
     }
     return () => {
@@ -89,13 +70,24 @@ export default function ResumeReview() {
     }
   }, [])
 
+  const { data, isMutating, trigger, error } = useSaveResume()
+  const onSubmit = async (data: ResumeFormType) => {
+    try {
+      await trigger({ resume: data })
+      router.push("/dashboard")
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   // RHF setup
   const form = useForm<ResumeFormType>({
     resolver: zodResolver(resumeSchema),
     defaultValues: resume || undefined,
-    mode: "onBlur",
+    mode: "onChange",
   })
-  const { control, reset, handleSubmit } = form
+  const { control, reset, handleSubmit, formState } = form
+  const { isValid } = formState
   const {
     fields: skillFields,
     append: appendSkill,
@@ -159,6 +151,54 @@ export default function ResumeReview() {
     name: "languages",
   })
 
+  // Helper to recursively extract error messages
+  const getErrorMessages = useCallback((errors: any, prefix = ""): string[] => {
+    if (!errors) return []
+    let messages: string[] = []
+    for (const key in errors) {
+      if (errors[key]?.message) {
+        messages.push(`${prefix}${key}: ${errors[key].message}`)
+      }
+      // For nested errors (arrays/objects)
+      if (
+        typeof errors[key] === "object" &&
+        !Array.isArray(errors[key]) &&
+        errors[key] !== null
+      ) {
+        messages = messages.concat(
+          getErrorMessages(errors[key], `${prefix}${key}.`)
+        )
+      }
+      // For arrays
+      if (Array.isArray(errors[key])) {
+        errors[key].forEach((item: any, idx: number) => {
+          messages = messages.concat(
+            getErrorMessages(item, `${prefix}${key}[${idx}].`)
+          )
+        })
+      }
+    }
+    return messages
+  }, [])
+
+  const errorMessages = getErrorMessages(formState.errors)
+
+  useEffect(() => {
+    if (resume) {
+      reset({
+        ...resume,
+        languages: resume.languages ?? [],
+        skills: resume.skills ?? [],
+        work_experiences: resume.work_experiences ?? [],
+        educations: resume.educations ?? [],
+        hobbies: resume.hobbies ?? [],
+        awards: resume.awards ?? [],
+        certifications: resume.certifications ?? [],
+        projects: resume.projects ?? [],
+      })
+    }
+  }, [resume, reset])
+
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center p-6">
@@ -207,13 +247,20 @@ export default function ResumeReview() {
               Make any necessary edits before we create your tailored resumes
             </p>
           </div>
+          {errorMessages.length > 0 && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+              <div className="font-semibold text-red-700 mb-2">
+                Please fix the following errors:
+              </div>
+              <ul className="list-disc list-inside text-red-600 text-sm">
+                {errorMessages.map((msg, idx) => (
+                  <li key={idx}>{msg}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           <Form {...form}>
-            <form
-              onSubmit={handleSubmit((data) => {
-                /* TODO: handle submit */
-              })}
-              className="space-y-6"
-            >
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Personal Information */}
               <PersonalInfoForm control={control} />
 
@@ -270,16 +317,30 @@ export default function ResumeReview() {
               />
 
               <HobbiesForm control={control} />
-
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+                  <div className="font-semibold text-red-700 mb-2">{error}</div>
+                </div>
+              )}
               {/* Continue Button */}
               <div className="flex justify-center pt-6">
                 <Button
+                  disabled={isMutating || !isValid}
                   size="lg"
                   className="bg-blue-600 hover:bg-blue-700 px-8"
                   type="submit"
                 >
-                  Continue to Dashboard
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  {isMutating ? (
+                    <>
+                      <Loader2 className="h-4 w-4" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      Save resume
+                      <Save className="ml-2 h-4 w-4" />
+                    </>
+                  )}
                 </Button>
               </div>
             </form>

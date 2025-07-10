@@ -42,7 +42,7 @@ export function LanguagesForm({
             >
               <FormField
                 control={control}
-                name={`skills.${index}.name`}
+                name={`languages.${index}.name`}
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel>Language</FormLabel>
@@ -55,7 +55,7 @@ export function LanguagesForm({
               />
               <FormField
                 control={control}
-                name={`skills.${index}.proficiency_level`}
+                name={`languages.${index}.proficiency`}
                 render={({ field }) => (
                   <FormItem className="flex-1">
                     <FormLabel>Proficiency</FormLabel>
@@ -80,9 +80,7 @@ export function LanguagesForm({
             type="button"
             variant="outline"
             className="mt-2"
-            onClick={() =>
-              appendLanguage({ name: "", proficiency_level: "Beginner" })
-            }
+            onClick={() => appendLanguage({ name: "", proficiency: "Fluent" })}
           >
             <Plus className="w-4 h-4 mr-1" /> Add language
           </Button>

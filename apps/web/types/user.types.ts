@@ -5,7 +5,7 @@ export type User = {
   email: string
   name?: string | null
   image?: string | null
-  initial_resume: Resume
+  initial_resume: { resume: Resume }
 }
 
 export type Session = {

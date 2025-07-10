@@ -79,7 +79,7 @@ async def get_user_data(
         user = user_service.get_user(current_user.id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        return {"status_code": 200, "detail": user}
+        return user
     except HTTPException as e:
         return e
     except Exception:

@@ -62,7 +62,7 @@ interface BaseResume {
   latest_role_company: string
 }
 
-export default function Dashboard() {
+export default function DashboardComponent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isCreatingResume, setIsCreatingResume] = useState(false)
   const [jobDescription, setJobDescription] = useState("")
@@ -70,16 +70,13 @@ export default function Dashboard() {
   const [companyName, setCompanyName] = useState("")
   const { data: user, isLoading, error } = useGetUser()
   const router = useRouter()
+
   useEffect(() => {
-    if (!isLoading && user) {
-      if (!user.initial_resume) {
-        router.replace("/onboarding")
-      }
-      if (error) {
-        console.error("Error fetching user data:", error)
-      }
+    console.log(user)
+    if (!isLoading && user && !user.initial_resume) {
+      router.replace("/onboarding")
     }
-  }, [user])
+  }, [user, isLoading, router])
 
   const handleCreateResume = () => {
     // Handle resume creation logic
@@ -95,6 +92,16 @@ export default function Dashboard() {
   }
 
   if (isLoading) {
+    return <PageLoader />
+  }
+
+  if (error) {
+    console.error("Error fetching user data:", error)
+    // TODO: implement a proper error component
+    return <div>Error loading data</div>
+  }
+
+  if (!user?.initial_resume) {
     return <PageLoader />
   }
 
@@ -153,19 +160,22 @@ export default function Dashboard() {
                 <div className="flex justify-between text-sm">
                   <span className="text-blue-700">Skills:</span>
                   <span className="font-medium text-blue-900">
-                    {user?.initial_resume.skills.length}
+                    {user.initial_resume.resume.skills.length}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-blue-700">Latest Role:</span>
                   <span className="font-medium text-blue-900">
-                    {user?.initial_resume?.work_experiences[0].position}
+                    {user.initial_resume.resume.work_experiences[0].position}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-blue-700">Company:</span>
                   <span className="font-medium text-blue-900">
-                    {user?.initial_resume.work_experiences[0].company_name}
+                    {
+                      user.initial_resume.resume.work_experiences[0]
+                        .company_name
+                    }
                   </span>
                 </div>
               </div>

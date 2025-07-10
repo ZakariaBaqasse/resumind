@@ -32,7 +32,7 @@ export interface PersonalInfo {
   address: string
   summary: string
   contact_links?: Link[] | null
-  age?: number | null
+  age?: string | null
   professional_title: string
 }
 
@@ -67,8 +67,8 @@ export interface Resume {
   work_experiences: WorkExperience[]
   educations: Education[]
   skills: Skill[]
-  projects: Project[]
-  certifications: Certification[]
+  projects?: Project[] | null
+  certifications?: Certification[] | null
   hobbies?: string[] | null
   languages?: Language[] | null
   awards?: Award[] | null

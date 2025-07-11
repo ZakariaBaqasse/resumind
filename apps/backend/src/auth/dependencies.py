@@ -1,11 +1,13 @@
-from src.user.service import UserService
+import logging
+
 from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jwt import PyJWKError
+
+from src.auth.jwt_handler import JWTHandler
 from src.auth.service import AuthService
 from src.user.dependencies import get_user_service
-from fastapi.security import OAuth2PasswordBearer
-from src.auth.jwt_handler import JWTHandler
-from jwt import PyJWKError
-import logging
+from src.user.service import UserService
 
 logger = logging.getLogger(__name__)
 

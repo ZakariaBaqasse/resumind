@@ -1,0 +1,133 @@
+import asyncio
+import json
+import os
+import shutil
+from logging import getLogger
+
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    HTTPException,
+    Request,
+    UploadFile,
+)
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+
+from src.auth.dependencies import get_current_user
+from src.core.types import Resume
+from src.user.dependencies import get_user_service
+from src.user.model import User
+from src.user.service import UserService
+
+logger = getLogger(__name__)
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "../../uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+user_router = APIRouter(prefix="/user", tags=["user"])
+
+UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "../../uploads")
+
+
+class SaveResumeRequest(BaseModel):
+    resume: Resume
+
+
+@user_router.post("/resume/upload")
+def upload_resume(
+    background_task: BackgroundTasks,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service),
+):
+    try:
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        ext = os.path.splitext(file.filename)[1].lower()
+        if ext not in [".pdf", ".doc", ".docx"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid file type. Only PDF, DOC, DOCX allowed.",
+            )
+        user_id = current_user.id
+        save_path = os.path.join(UPLOAD_DIR, f"{user_id}{ext}")
+        with open(save_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        background_task.add_task(
+            user_service.extract_initial_resume, save_path, current_user
+        )
+        return {
+            "status_code": 200,
+            "detail": "resume uploaded successfully, extracting infos",
+        }
+    except HTTPException as e:
+        return e
+    except Exception:
+        return HTTPException(status_code=500, detail="Internal Server error")
+
+
+@user_router.get("/get")
+async def get_user_data(
+    current_user: User = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service),
+):
+    """
+    Get the current user's data.
+    """
+    try:
+        user = user_service.get_user(current_user.id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
+    except HTTPException as e:
+        return e
+    except Exception:
+        return HTTPException(status_code=500, detail="Internal Server error")
+
+
+@user_router.get("/resume/status/{token}")
+async def resume_status_sse(
+    token: str, request: Request, user_service: UserService = Depends(get_user_service)
+):
+    """
+    SSE endpoint to notify frontend when resume extraction is complete.
+    Authenticates user using JWT token from route param.
+    """
+    try:
+        user = await get_current_user(token, user_service)
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    async def event_generator(user_id: str):
+        while True:
+            user = user_service.get_user(user_id)
+            if user is None:
+                yield f"data:{json.dumps({'status': 'error', 'detail': 'User not found'})}\n\n"
+                break
+            if isinstance(user.initial_resume, dict) and len(user.initial_resume) > 0:
+                yield f"data: {json.dumps({'status': 'complete', 'resume': user.initial_resume})}\n\n"
+                break
+            yield f"data: {json.dumps({'status': 'waiting'})}\n\n"
+            await asyncio.sleep(2)
+            if await request.is_disconnected():
+                break
+
+    return StreamingResponse(event_generator(user.id), media_type="text/event-stream")
+
+
+@user_router.post("/resume/save")
+async def save_resume(
+    resume: SaveResumeRequest,
+    current_user: User = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service),
+):
+    try:
+        user = user_service.save_resume(current_user.id, resume)
+        return {"status_code": 200, "detail": user}
+    except HTTPException as e:
+        return e
+    except Exception:
+        return HTTPException(status_code=500, detail="Internal Server error")

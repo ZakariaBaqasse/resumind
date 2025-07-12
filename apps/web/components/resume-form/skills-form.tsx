@@ -28,18 +28,21 @@ export function SkillsForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Code className="w-5 h-5 text-blue-600" />
-          Skills
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Code className="w-5 h-5 text-blue-600" />
+            Skills
+          </CardTitle>
+          <Button onClick={appendSkill} size="sm" variant="outline">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Skill
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {skillFields.map((field, index) => (
-            <div
-              key={field.id}
-              className="flex flex-col md:flex-row md:items-center gap-2"
-            >
+            <div key={field.id} className="flex gap-2 items-end">
               <FormField
                 control={control}
                 name={`skills.${index}.name`}
@@ -67,25 +70,15 @@ export function SkillsForm({
                 )}
               />
               <Button
-                type="button"
-                variant="destructive"
-                className="ml-2"
                 onClick={() => removeSkill(index)}
+                size="sm"
+                variant="outline"
+                className="text-red-600 hover:text-red-700"
               >
                 <X className="w-4 h-4" />
               </Button>
             </div>
           ))}
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-2"
-            onClick={() =>
-              appendSkill({ name: "", proficiency_level: "Beginner" })
-            }
-          >
-            <Plus className="w-4 h-4 mr-1" /> Add Skill
-          </Button>
         </div>
       </CardContent>
     </Card>

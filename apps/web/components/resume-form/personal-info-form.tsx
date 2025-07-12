@@ -1,4 +1,4 @@
-import { Plus, User, X } from "lucide-react"
+import { Plus, Trash2, User, X } from "lucide-react"
 import { Control, useFieldArray } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
@@ -181,12 +181,12 @@ export function PersonalInfoForm({ control }: PersonalInfoFormProps) {
                       )}
                     />
                     <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
                       onClick={() => remove(idx)}
+                      size="sm"
+                      variant="ghost"
+                      className="text-red-600 hover:text-red-700"
                     >
-                      <X className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                   {/* Error messages below the row */}

@@ -86,6 +86,30 @@ export default function ViewResumeDialog({
                   {detailedResume.personal_info.address}
                 </span>
               </div>
+              {/* Contact Links */}
+              {Array.isArray(detailedResume.personal_info.contact_links) &&
+                detailedResume.personal_info.contact_links.length > 0 && (
+                  <div className="col-span-1 md:col-span-2">
+                    <span className="font-medium text-gray-700 block mb-1">
+                      Contact Links:
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {detailedResume.personal_info.contact_links.map(
+                        (link, idx) => (
+                          <a
+                            key={idx}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 text-sm hover:underline"
+                          >
+                            {link.platform || link.url}
+                          </a>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
             </div>
             <div>
               <span className="font-medium text-gray-700 block mb-2">

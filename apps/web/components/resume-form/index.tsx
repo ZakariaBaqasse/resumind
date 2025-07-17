@@ -3,6 +3,7 @@
 import { useCallback, useEffect } from "react"
 import { ResumeFormType, resumeSchema } from "@/schema/resume.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { CheckCircle } from "lucide-react"
 import { useFieldArray, useForm } from "react-hook-form"
 
 import { Resume } from "@/types/resume.types"
@@ -23,8 +24,10 @@ interface ResumeEditFormProps {
   resume?: Resume | null
   onSubmit: (data: ResumeFormType) => Promise<void>
   isSubmitting?: boolean
+  submitError: any
   submitButtonText?: string
   showErrorMessages?: boolean
+  saveSuccess?: boolean
 }
 
 export default function ResumeEditForm({
@@ -33,6 +36,8 @@ export default function ResumeEditForm({
   isSubmitting = false,
   submitButtonText = "Save Resume",
   showErrorMessages = true,
+  submitError,
+  saveSuccess = false,
 }: ResumeEditFormProps) {
   // RHF setup
   const form = useForm<ResumeFormType>({
@@ -243,16 +248,31 @@ export default function ResumeEditForm({
 
           {/* Hobbies */}
           <HobbiesForm control={control} />
-
-          {/* Submit Button */}
-          <div className="flex justify-center pt-6">
+          {submitError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+              <div className="font-semibold text-red-700 mb-2">
+                Error while saving your changes please try again
+              </div>
+            </div>
+          )}
+          {/* Submit Button and Success Message */}
+          <div className="flex flex-col items-center pt-6">
             <Button
-              disabled={isSubmitting || !isValid}
-              size="lg"
-              className="bg-blue-600 hover:bg-blue-700 px-8"
+              disabled={isSubmitting || !isValid || saveSuccess}
               type="submit"
+              className={`px-8 py-2 rounded text-white text-lg font-semibold transition-colors duration-500
+                ${saveSuccess ? "bg-green-600" : "bg-blue-600 hover:bg-blue-700"}
+                ${isSubmitting || !isValid ? "opacity-60 cursor-not-allowed" : ""}
+              `}
             >
-              {submitButtonText}
+              {saveSuccess ? (
+                <span className="flex items-center gap-2 transition-opacity duration-500">
+                  <CheckCircle className="w-5 h-5" />
+                  Saved!
+                </span>
+              ) : (
+                submitButtonText
+              )}
             </Button>
           </div>
         </form>

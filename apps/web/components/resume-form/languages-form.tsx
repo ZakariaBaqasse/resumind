@@ -28,18 +28,26 @@ export function LanguagesForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Languages className="w-5 h-5 text-blue-600" />
-          Languages
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Languages className="w-5 h-5 text-blue-600" />
+            Languages
+          </CardTitle>
+          <Button onClick={appendLanguage} size="sm" variant="outline">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Language
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        {languageFields.length === 0 && (
+          <div className="text-sm text-gray-500 mb-2">
+            No languages added yet.
+          </div>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {languageFields.map((field, index) => (
-            <div
-              key={field.id}
-              className="flex flex-col md:flex-row md:items-center gap-2"
-            >
+            <div key={field.id} className="flex gap-2 items-end">
               <FormField
                 control={control}
                 name={`languages.${index}.name`}
@@ -67,23 +75,15 @@ export function LanguagesForm({
                 )}
               />
               <Button
-                type="button"
-                variant="destructive"
-                className="ml-2"
                 onClick={() => removeLanguage(index)}
+                size="sm"
+                variant="outline"
+                className="text-red-600 hover:text-red-700"
               >
                 <X className="w-4 h-4" />
               </Button>
             </div>
           ))}
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-2"
-            onClick={() => appendLanguage({ name: "", proficiency: "Fluent" })}
-          >
-            <Plus className="w-4 h-4 mr-1" /> Add language
-          </Button>
         </div>
       </CardContent>
     </Card>

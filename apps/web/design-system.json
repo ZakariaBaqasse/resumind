@@ -1,0 +1,207 @@
+{
+  "design_system_profile": {
+    "name": "Modern AI/Tech Landing Page System",
+    "version": "1.0.0",
+    "description": "A comprehensive design system for modern AI/tech landing pages with glassmorphism aesthetics and 3D elements",
+
+    "color_palette": {
+      "primary": {
+        "blue_gradient": ["#6366f1", "#8b5cf6", "#a855f7"],
+        "purple_gradient": ["#8b5cf6", "#a855f7", "#d946ef"],
+        "accent_blue": "#3b82f6"
+      },
+      "secondary": {
+        "soft_pastels": ["#f0f9ff", "#fef3c7", "#fce7f3"],
+        "neutral_grays": ["#f8fafc", "#f1f5f9", "#e2e8f0"],
+        "white": "#ffffff"
+      },
+      "background": {
+        "gradient_overlays": true,
+        "mesh_gradients": true,
+        "radial_gradients": [
+          "from-blue-50 to-purple-50",
+          "from-indigo-100 via-purple-50 to-pink-100"
+        ]
+      }
+    },
+
+    "typography": {
+      "font_families": {
+        "primary": "Inter, system-ui, sans-serif",
+        "secondary": "SF Pro Display, Inter, sans-serif"
+      },
+      "scale": {
+        "hero_heading": "text-6xl lg:text-7xl xl:text-8xl",
+        "section_heading": "text-4xl lg:text-5xl",
+        "subsection_heading": "text-2xl lg:text-3xl",
+        "body_large": "text-lg lg:text-xl",
+        "body_regular": "text-base lg:text-lg",
+        "caption": "text-sm lg:text-base"
+      },
+      "weights": {
+        "light": 300,
+        "regular": 400,
+        "medium": 500,
+        "semibold": 600,
+        "bold": 700,
+        "extrabold": 800
+      },
+      "line_heights": {
+        "tight": "leading-tight",
+        "normal": "leading-normal",
+        "relaxed": "leading-relaxed"
+      }
+    },
+
+    "layout_structure": {
+      "container_widths": {
+        "full": "w-full",
+        "contained": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+        "narrow": "max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
+      },
+      "section_spacing": {
+        "large": "py-20 lg:py-32",
+        "medium": "py-16 lg:py-24",
+        "small": "py-12 lg:py-16"
+      },
+      "grid_systems": {
+        "hero": "grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16",
+        "features": "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12",
+        "content": "grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16",
+        "testimonials": "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+      }
+    },
+
+    "visual_elements": {
+      "glassmorphism": {
+        "enabled": true,
+        "styles": {
+          "backdrop_blur": "backdrop-blur-xl",
+          "background": "bg-white/10 border border-white/20",
+          "shadow": "shadow-xl shadow-black/5"
+        }
+      },
+      "3d_elements": {
+        "enabled": true,
+        "types": [
+          "isometric_illustrations",
+          "floating_3d_shapes",
+          "geometric_forms",
+          "abstract_3d_objects"
+        ],
+        "positioning": "absolute positioning with z-index layering"
+      },
+      "animations": {
+        "hover_effects": {
+          "scale": "hover:scale-105",
+          "translate": "hover:-translate-y-2",
+          "glow": "hover:shadow-2xl hover:shadow-blue-500/25"
+        },
+        "entrance_animations": {
+          "fade_in": "opacity-0 animate-fade-in",
+          "slide_up": "translate-y-8 opacity-0 animate-slide-up",
+          "stagger": "animation-delay utilities"
+        }
+      }
+    },
+
+    "component_patterns": {
+      "hero_section": {
+        "structure": "split layout with text left, visual right",
+        "elements": [
+          "large heading with gradient text",
+          "descriptive subheading",
+          "call-to-action buttons",
+          "3D illustration or graphic"
+        ],
+        "background": "gradient mesh with floating elements"
+      },
+      "feature_cards": {
+        "style": "glassmorphism cards with rounded corners",
+        "layout": "grid with consistent spacing",
+        "content": [
+          "icon or small illustration",
+          "feature title",
+          "description text",
+          "optional call-to-action"
+        ],
+        "effects": "hover animations and subtle shadows"
+      },
+      "statistics_section": {
+        "style": "large numbers with context",
+        "layout": "horizontal or grid layout",
+        "visual_treatment": "gradient backgrounds or glassmorphism",
+        "typography": "extra-large numbers with descriptive text"
+      },
+      "content_blocks": {
+        "alternating_layout": true,
+        "image_text_pairs": true,
+        "background_variations": "alternating light/gradient backgrounds"
+      }
+    },
+
+    "interactive_elements": {
+      "buttons": {
+        "primary": {
+          "style": "gradient background with rounded corners",
+          "hover": "hover effects with shadow enhancement",
+          "sizes": ["sm", "md", "lg", "xl"]
+        },
+        "secondary": {
+          "style": "outline or ghost style",
+          "hover": "background fill animation"
+        }
+      },
+      "form_elements": {
+        "inputs": "glassmorphism style with soft borders",
+        "focus_states": "gradient border emphasis",
+        "validation": "subtle color changes"
+      },
+      "navigation": {
+        "style": "clean, minimal with glassmorphism on scroll",
+        "mobile": "hamburger menu with smooth transitions"
+      }
+    },
+
+    "responsive_behavior": {
+      "breakpoints": {
+        "mobile": "320px - 768px",
+        "tablet": "768px - 1024px",
+        "desktop": "1024px+"
+      },
+      "layout_adaptations": {
+        "mobile": "single column, stacked elements",
+        "tablet": "2-column grids, adjusted spacing",
+        "desktop": "full multi-column layouts"
+      },
+      "image_handling": "responsive images with multiple sources"
+    },
+
+    "accessibility": {
+      "color_contrast": "WCAG AA compliant",
+      "focus_indicators": "visible focus rings",
+      "semantic_html": "proper heading hierarchy and landmarks",
+      "alt_text": "descriptive alternative text for images"
+    },
+
+    "performance_considerations": {
+      "image_optimization": "WebP format with fallbacks",
+      "lazy_loading": "images and heavy elements",
+      "css_optimization": "minimal, utility-first approach",
+      "javascript": "minimal, progressive enhancement"
+    },
+
+    "brand_positioning": {
+      "tone": "modern, innovative, trustworthy",
+      "visual_language": "clean, premium, tech-forward",
+      "messaging_hierarchy": "problem → solution → benefits → proof → action"
+    },
+
+    "implementation_notes": {
+      "css_framework": "Tailwind CSS preferred",
+      "build_tools": "PostCSS, Autoprefixer",
+      "browser_support": "Modern browsers (last 2 versions)",
+      "fallbacks": "Graceful degradation for older browsers"
+    }
+  }
+}

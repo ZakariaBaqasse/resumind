@@ -1,155 +1,123 @@
-import Image from "next/image"
-import { CheckCircle2 } from "lucide-react"
+import {
+  Briefcase,
+  FileText,
+  ClipboardList,
+  Sparkles,
+  UploadCloud,
+  ScanSearch,
+  FileCheck2,
+} from "lucide-react"
 
 const features = [
   {
-    name: "Secure & Private",
-    description:
-      "Enterprise-grade security with end-to-end encryption and customizable data retention policies.",
-    iconBg: "from-[#F0EBFF] to-[#E5D8FF]",
-    iconColor: "text-primary",
+    name: "Upload Your Resume",
+    description: "Start by uploading your existing resume in any format.",
+    icon: <UploadCloud className="size-8 text-primary-purple" />,
   },
   {
-    name: "Team Collaboration",
-    description:
-      "Real-time collaboration tools that allow seamless teamwork across your organization.",
-    iconBg: "from-[#F0EBFF] to-[#E5D8FF]",
-    iconColor: "text-primary",
+    name: "Paste a Job Description",
+    description: "Provide the job description you're targeting.",
+    icon: <ScanSearch className="size-8 text-primary-purple" />,
   },
   {
-    name: "Universal Integration",
+    name: "Generate Tailored CV",
     description:
-      "Connect with your existing tools through our extensive API and pre-built integrations.",
-    iconBg: "from-[#F0EBFF] to-[#E5D8FF]",
-    iconColor: "text-primary",
+      "Our AI rewrites your resume to highlight the most relevant skills.",
+    icon: <Sparkles className="size-8 text-primary-purple" />,
   },
   {
-    name: "Advanced Analytics",
-    description:
-      "Gain invaluable insights with our detailed analytics dashboard and customizable reports.",
-    iconBg: "from-[#F0EBFF] to-[#E5D8FF]",
-    iconColor: "text-primary",
+    name: "Create a Cover Letter",
+    description: "Generate a compelling cover letter that matches the job.",
+    icon: <FileCheck2 className="size-8 text-primary-purple" />,
   },
 ]
 
-const smartWorkflowFeatures = [
-  "Automate repetitive tasks with customizable workflows",
-  "Natural language processing for effortless interaction",
-  "Contextual recommendations based on your team's behavior",
-  "Proactive alerts for potential issues or opportunities",
+const howItWorks = [
+  {
+    step: 1,
+    title: "Upload Your Base Resume",
+    description:
+      "Provide us with your current resume. We'll use this as the foundation for all your tailored applications.",
+    icon: <UploadCloud className="size-10 text-accent-blue" />,
+  },
+  {
+    step: 2,
+    title: "Provide the Job Description",
+    description:
+      "Paste the details of the job you want to apply for. Our AI will analyze the key requirements and skills.",
+    icon: <ClipboardList className="size-10 text-accent-blue" />,
+  },
+  {
+    step: 3,
+    title: "Receive Your Enhanced Documents",
+    description:
+      "Get an AI-powered CV and cover letter, optimized to catch the recruiter's eye while staying true to your experience.",
+    icon: <FileText className="size-10 text-accent-blue" />,
+  },
 ]
 
 export function Features() {
   return (
-    <section
-      id="features"
-      className="bg-[linear-gradient(135deg,_rgba(var(--primary-rgb),_0.1)_0%,_rgba(255,_255,_255,_0.8)_50%,_rgba(10,_175,_156,_0.1)_100%)] py-24"
-    >
+    <section id="features" className="bg-secondary-pastel-1 py-20 lg:py-32">
       <div className="container mx-auto px-4">
-        {/* Features Header */}
+        {/* Top Features Section */}
         <div className="mb-16 text-center">
-          <p className="mb-4 text-sm font-medium text-primary">FEATURES</p>
-          <h2 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">
-            The Ultimate AI Assistant for Modern Teams
+          <p className="mb-4 font-semibold uppercase tracking-wider text-accent-blue">
+            Core Features
+          </p>
+          <h2 className="text-4xl font-extrabold tracking-tight text-foreground lg:text-5xl">
+            Everything You Need to Succeed
           </h2>
-          <p className="mx-auto max-w-2xl text-lg text-gray-600">
-            Our AI platform helps you streamline workflows, enhance
-            productivity, and make data-driven decisions with ease.
+          <p className="mx-auto mt-4 max-w-3xl text-lg text-muted-foreground lg:text-xl">
+            From resume analysis to personalized document generation, Resumind
+            provides the tools to elevate your job application.
           </p>
         </div>
-
-        {/* Features Grid */}
         <div className="mb-24 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {features.map((feature, index) => (
+          {features.map((feature) => (
             <div
               key={feature.name}
-              className="rounded-xl bg-white p-6 shadow-lg transition-shadow duration-300 hover:shadow-xl"
+              className="transform rounded-xl border border-white/20 bg-white/50 p-8 text-center shadow-lg backdrop-blur-xl transition-transform hover:scale-105 hover:shadow-xl"
             >
-              <div
-                className={`size-12 rounded-full bg-gradient-to-br ${feature.iconBg} mb-4 flex items-center justify-center`}
-              >
-                <div className={`size-6 ${feature.iconColor}`}>
-                  {index === 0 && (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  )}
-                  {index === 1 && (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  )}
-                  {index === 2 && (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  )}
-                  {index === 3 && (
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  )}
-                </div>
+              <div className="mb-4 inline-flex items-center justify-center rounded-full bg-white p-4 shadow-md">
+                {feature.icon}
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900">
+              <h3 className="mb-2 text-xl font-bold text-foreground">
                 {feature.name}
               </h3>
-              <p className="text-sm leading-relaxed text-gray-600">
-                {feature.description}
-              </p>
+              <p className="text-muted-foreground">{feature.description}</p>
             </div>
           ))}
         </div>
 
-        {/* Smart Workflows Section */}
-        <div className="grid grid-cols-1 items-center gap-12 md:grid-cols-2">
-          <div className="relative">
-            <div className="absolute inset-0 -rotate-3 rounded-2xl bg-primary opacity-5"></div>
-            <Image
-              src="/images/features.jpeg"
-              alt="Smart Workflows Dashboard"
-              width={600}
-              height={400}
-              className="relative rounded-2xl shadow-lg"
-            />
-          </div>
-          <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-gray-900 md:text-3xl">
-              Smart Workflows That Adapt To Your Needs
-            </h3>
-            <p className="text-gray-600">
-              Our AI continuously learns from your team&#39;s patterns to
-              automate routine tasks, suggest improvements, and identify
-              potential bottlenecks before they occur.
-            </p>
-            <ul className="space-y-4">
-              {smartWorkflowFeatures.map((feature) => (
-                <li key={feature} className="flex items-start space-x-3">
-                  <CheckCircle2 className="size-6 shrink-0 text-primary" />
-                  <span className="text-gray-600">{feature}</span>
-                </li>
+        {/* How It Works Section */}
+        <div className="text-center">
+          <p className="mb-4 font-semibold uppercase tracking-wider text-accent-blue">
+            How It Works
+          </p>
+          <h2 className="mb-12 text-4xl font-extrabold tracking-tight text-foreground lg:text-5xl">
+            Get Your Tailored Application in 3 Simple Steps
+          </h2>
+          <div className="relative mx-auto max-w-5xl">
+            <div className="absolute left-1/2 top-1/2 hidden h-1 w-full -translate-y-1/2 transform border-t-2 border-dashed border-primary-purple/50 lg:block"></div>
+            <div className="grid grid-cols-1 gap-12 lg:grid-cols-3">
+              {howItWorks.map((item) => (
+                <div
+                  key={item.step}
+                  className="relative z-10 space-y-4 rounded-lg bg-white p-8 shadow-lg"
+                >
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="flex size-12 items-center justify-center rounded-full bg-secondary-pastel-1 font-bold text-accent-blue">
+                      {item.icon}
+                    </div>
+                    <h3 className="text-2xl font-bold text-foreground">
+                      {item.title}
+                    </h3>
+                  </div>
+                  <p className="text-muted-foreground">{item.description}</p>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </div>
       </div>

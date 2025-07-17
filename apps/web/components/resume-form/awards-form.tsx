@@ -1,5 +1,5 @@
-import { Plus, X } from "lucide-react"
-import { Control, FieldArrayWithId } from "react-hook-form"
+import { Plus, Trash2, Trophy } from "lucide-react"
+import { Control, FieldArrayWithId, useWatch } from "react-hook-form"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,27 +27,53 @@ export function AwardsForm({
   appendAward,
   removeAward,
 }: AwardsFormProps) {
+  const watchedAwards = useWatch({
+    control,
+    name: "awards",
+  })
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          Awards & Honors
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-blue-600" />
+            Awards & Honors
+          </CardTitle>
+          <Button onClick={appendAward} size="sm" variant="outline">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Award
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         {awardFields.length === 0 && (
           <div className="text-sm text-gray-500 mb-2">No awards added yet.</div>
         )}
         {awardFields.map((field, index) => (
-          <div key={field.id} className="space-y-4">
-            {index > 0 && <Separator />}
+          <div
+            key={field.id}
+            className="space-y-4 p-4 border border-gray-200 rounded-lg"
+          >
+            <div className="flex justify-between items-start">
+              <h2 className="font-semibold text-lg text-gray-900">
+                {watchedAwards?.[index]?.title || `Award ${index + 1}`}
+              </h2>
+              <Button
+                onClick={() => removeAward(index)}
+                size="sm"
+                variant="ghost"
+                className="text-red-600 hover:text-red-700"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={control}
                 name={`awards.${index}.title`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Title</FormLabel>
+                    <FormLabel>Award Title</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -73,9 +99,9 @@ export function AwardsForm({
                 name={`awards.${index}.date`}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date</FormLabel>
+                    <FormLabel>Date (YYYY-MM)</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="YYYY-MM-DD" />
+                      <Input {...field} placeholder="2023-06" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -95,31 +121,8 @@ export function AwardsForm({
                 )}
               />
             </div>
-            <Button
-              type="button"
-              variant="destructive"
-              className="ml-2"
-              onClick={() => removeAward(index)}
-            >
-              <X className="w-4 h-4" />
-            </Button>
           </div>
         ))}
-        <Button
-          type="button"
-          variant="outline"
-          className="mt-2"
-          onClick={() =>
-            appendAward({
-              title: "",
-              issuer: "",
-              date: null,
-              description: null,
-            })
-          }
-        >
-          <Plus className="w-4 h-4 mr-1" /> Add Award
-        </Button>
       </CardContent>
     </Card>
   )

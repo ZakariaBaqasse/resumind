@@ -19,6 +19,7 @@ export default function ResumeReview() {
   )
   const { data: session } = useSession()
   const router = useRouter()
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   // Simulate SSE connection and data reception
   useEffect(() => {
@@ -62,7 +63,10 @@ export default function ResumeReview() {
   const handleSubmit = async (data: ResumeFormType) => {
     try {
       await trigger({ resume: data })
-      router.push("/dashboard")
+      setSaveSuccess(true)
+      setTimeout(() => {
+        router.push("/dashboard")
+      }, 1800)
     } catch (error) {
       console.error(error)
     }
@@ -129,6 +133,8 @@ export default function ResumeReview() {
             isSubmitting={isMutating}
             submitButtonText="Save Resume"
             showErrorMessages={true}
+            submitError={error}
+            saveSuccess={saveSuccess}
           />
         </div>
       </div>

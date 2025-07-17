@@ -1,9 +1,11 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { ResumeFormType } from "@/schema/resume.schema"
 
 import { useGetUser } from "@/hooks/dashboard/use-get-user"
+import { useSaveResume } from "@/hooks/onboarding/use-save-resume"
 import ResumeEditForm from "@/components/resume-form"
 
 import EditResumeLoadingSkeleton from "./loading-skeleton"
@@ -11,6 +13,8 @@ import EditResumeLoadingSkeleton from "./loading-skeleton"
 export default function EditResumeForm() {
   const { data: user, isLoading, error } = useGetUser()
   const router = useRouter()
+  const { trigger, data, error: saveError, isMutating } = useSaveResume()
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   useEffect(() => {
     if (!isLoading && !user?.initial_resume) {
@@ -54,11 +58,15 @@ export default function EditResumeForm() {
     )
   }
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: ResumeFormType) => {
     try {
       // TODO: Implement save functionality
       console.log("Saving resume:", data)
-      router.push("/dashboard")
+      await trigger({ resume: data })
+      setSaveSuccess(true)
+      setTimeout(() => {
+        router.push("/dashboard")
+      }, 1800)
     } catch (error) {
       console.error("Error saving resume:", error)
     }
@@ -87,7 +95,10 @@ export default function EditResumeForm() {
           resume={user.initial_resume.resume}
           onSubmit={handleSubmit}
           submitButtonText="Save Changes"
+          isSubmitting={isMutating}
           showErrorMessages={true}
+          submitError={saveError}
+          saveSuccess={saveSuccess}
         />
       </div>
     </div>

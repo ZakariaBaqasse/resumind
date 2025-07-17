@@ -42,41 +42,72 @@ export function SkillsForm({
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {skillFields.map((field, index) => (
-            <div key={field.id} className="flex gap-2 items-end">
-              <FormField
-                control={control}
-                name={`skills.${index}.name`}
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Skill</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Skill name" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name={`skills.${index}.proficiency_level`}
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Proficiency</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Proficiency level" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button
-                onClick={() => removeSkill(index)}
-                size="sm"
-                variant="outline"
-                className="text-red-600 hover:text-red-700"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+            <div key={field.id}>
+              {/* Inputs row */}
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <FormField
+                    control={control}
+                    name={`skills.${index}.name`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Skill</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Skill name" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="flex-1">
+                  <FormField
+                    control={control}
+                    name={`skills.${index}.proficiency_level`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Proficiency</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Proficiency level" />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <Button
+                  onClick={() => removeSkill(index)}
+                  size="sm"
+                  variant="outline"
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+              {/* Error messages row */}
+              <div className="flex gap-2 -mt-2 mb-4">
+                <div className="flex-1">
+                  <FormField
+                    control={control}
+                    name={`skills.${index}.name`}
+                    render={() => (
+                      <FormItem>
+                        <FormMessage className="min-h-[20px]" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="flex-1">
+                  <FormField
+                    control={control}
+                    name={`skills.${index}.proficiency_level`}
+                    render={() => (
+                      <FormItem>
+                        <FormMessage className="min-h-[20px]" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="w-[40px]" />
+              </div>
             </div>
           ))}
         </div>

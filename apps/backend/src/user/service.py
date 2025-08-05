@@ -12,10 +12,9 @@ from src.user.prompts.extract_resume_content_prompt import (
     extract_resume_content_system_prompt,
 )
 from src.user.repository import UserRepository
+from src.core.constants import MODEL_NAME
 
 logger = getLogger(__name__)
-
-MODEL_NAME = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
 
 
 class UserService:

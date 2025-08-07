@@ -1,5 +1,6 @@
 import asyncio
 import operator
+import logging
 from typing import Dict, Any, Annotated, List
 from datetime import date
 from pydantic import BaseModel
@@ -15,6 +16,7 @@ from langchain_core.messages import (
     BaseMessage,
 )
 
+from src.configs.database_config import get_session_context
 from src.job_applications.types import DiscoveredCompanyProfile
 from src.job_applications.prompts.company_profiler import (
     company_discovery_system_prompt,
@@ -25,13 +27,15 @@ from src.job_applications.tools import (
     CompanyDiscoveryDoneTool,
 )
 from src.core.constants import MODEL_NAME
-import logging
 from src.core.rate_limit_handlers import RateLimiter, retry_with_backoff
+from src.core.service_registry import ServiceRegistry
+from src.job_applications.services.job_application_service import JobApplicationService
 
 logger = logging.getLogger(__name__)
 
 
 class CompanyDiscoveryAgentState(BaseModel):
+    job_application_id: str
     company: str
     job_role: str
     job_description: str
@@ -107,6 +111,13 @@ class CompanyDiscoveryAgent:
                     final_results = DiscoveredCompanyProfile.model_validate(
                         tool_args["discovery_results"]
                     )
+                    with get_session_context() as session:
+                        job_application_service = (
+                            ServiceRegistry.get_job_application_service(session)
+                        )
+                        job_application_service.update_company_profile_discovery_results(
+                            state.job_application_id, final_results
+                        )
                     return Command(
                         goto=END,
                         update={"company_discovery_results": final_results},

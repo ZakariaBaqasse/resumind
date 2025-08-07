@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 
 class ResumeGenerationStatus(Enum):
+    STARTED = "started"
     PROCESSING_COMPANY_PROFILE = "processing_company_profile"
     PROCESSING_RESUME_GENERATION = "processing_resume_generation"
     COMPLETED = "completed"
@@ -43,8 +44,9 @@ class ResearchPlan(BaseModel):
 
 
 class CompanyProfile(BaseModel):
-    company_name: str = Field(
-        ..., description="The name of the company being profiled."
+    company_discovery_results: "DiscoveredCompanyProfile" = Field(
+        ...,
+        description="The raw, unstructured information gathered during the initial discovery phase of the company profile.",
     )
     research_plan: ResearchPlan = Field(
         ..., description="The research plan used to guide company research."
@@ -163,3 +165,9 @@ class DiscoveredCompanyProfile(BaseModel):
     sources_consulted: List[str] = Field(
         [], description="List of sources consulted during the discovery."
     )
+
+
+class CreateJobApplicationRequest(BaseModel):
+    job_role: str
+    job_description: str
+    company: str

@@ -15,9 +15,7 @@ class JobApplicationBase(SQLModel):
     id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     job_title: str
     company_name: str
-    application_info: Optional[Dict[str, Any]] = Field(
-        default=None, alias="applicationInfo", sa_column=Column(JSON)
-    )
+    job_description: str
     company_profile: Optional[Dict[str, Any]] = Field(
         default=None, alias="companyProfile", sa_column=Column(JSON)
     )
@@ -27,6 +25,7 @@ class JobApplicationBase(SQLModel):
     original_resume_snapshot: Optional[Dict[str, Any]] = Field(
         default=None, alias="originalResumeSnapshot", sa_column=Column(JSON)
     )
+    background_task_id: Optional[str]
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         alias="createdAt",

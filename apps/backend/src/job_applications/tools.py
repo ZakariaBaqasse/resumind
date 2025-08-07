@@ -1,3 +1,4 @@
+import os
 from typing import List, Dict
 import logging
 from pydantic import BaseModel
@@ -17,7 +18,12 @@ from src.job_applications.types import DiscoveredCompanyProfile
 
 logger = logging.getLogger(__name__)
 
-tavily_tool = TavilySearch(max_results=5, name="tavily_tool")
+tavily_api_key = os.environ.get("TAVILY_API_KEY")
+tavily_tool = None
+if tavily_api_key:
+    tavily_tool = TavilySearch(max_results=5, name="tavily_tool")
+else:
+    logger.warning("TAVILY_API_KEY not found. Tavily search tool will be disabled.")
 
 
 @tool
@@ -26,6 +32,11 @@ async def company_discovery_tool(company_name: str, additional_context: str = ""
     Multi-stage company discovery that tries different search strategies
     to find the official website and basic company information.
     """
+    if not tavily_tool:
+        message = "Tavily search is not available because TAVILY_API_KEY is not set."
+        logger.error(message)
+        return {"error": message}
+
     search_queries = [
         f'"{company_name}" official website',
         f"{company_name} company site:linkedin.com",

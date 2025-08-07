@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/*.egg-info/
+**/venv/
+**/.venv/
+**/env/
+**/envs/
+
+
+# Test Artifacts
+.pytest_cache/
+coverage/
+htmlcov/
+.coverage
+
+# IDE / Editor Config
+.vscode/
+.idea/
+
+# OS Specific
+.DS_Store
+
+# Logs / Temp
+*.log
+*.tmp
+
+# Env files (already in your .gitignore, good practice here too)
+.env*
+!.env.example 

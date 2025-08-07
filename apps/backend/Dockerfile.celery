@@ -1,0 +1,24 @@
+# Builder stage — installs dependencies
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+WORKDIR /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    uv sync --locked --no-install-project --no-dev
+COPY . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev
+
+# Final stage — lean runtime
+FROM python:3.12-slim-bookworm
+RUN apt-get update && apt-get install -y libpq-dev gcc && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /app /app
+ENV PATH="/app/.venv/bin:$PATH"
+RUN groupadd -r celery \
+ && useradd -r -g celery celery \
+ && mkdir -p /app \
+ && chown -R celery:celery /app
+
+USER celery
+WORKDIR /app
+CMD ["celery", "-A", "src.celery_app", "worker", "-E", "-l", "INFO", "-O", "fair", "--concurrency=8"]

@@ -13,7 +13,9 @@ from langchain_core.messages import (
 from langchain_core.runnables import RunnableConfig
 from langgraph.types import Command, Send
 
+from src.configs.database_config import get_session_context
 from src.core.constants import MODEL_NAME, STRUCTURED_OUTPUT_MAX_RETRY
+from src.core.service_registry import ServiceRegistry
 from src.job_applications.types import ResearchPlan
 from src.job_applications.prompts.company_profiler import (
     research_planner_system_prompt,
@@ -46,6 +48,7 @@ def last_value_reducer(old, new):
 
 
 class CompanyProfilerState(BaseModel):
+    job_application_id: str
     job_role: Annotated[str, last_value_reducer]
     job_description: str
     company: Annotated[str, last_value_reducer]
@@ -90,9 +93,11 @@ class CompanyProfilerAgent:
             builder.add_node("company_discovery", company_discovery_graph)
             builder.add_node("research_planner", self.research_planner)
             builder.add_node("research_executor", research_executor_graph)
+            builder.add_node("finalize_research", self.finalize_research)
             builder.add_edge(START, "company_discovery")
             builder.add_edge("company_discovery", "research_planner")
-            builder.add_edge("research_executor", END)
+            builder.add_edge("research_executor", "finalize_research")
+            builder.add_edge("finalize_research", END)
             return builder.compile(checkpointer=checkpointer, debug=self.debug)
         except Exception as e:
             logger.error(
@@ -123,6 +128,13 @@ class CompanyProfilerAgent:
                         ]
                     )
                 )
+            with get_session_context() as session:
+                job_application_service = ServiceRegistry.get_job_application_service(
+                    session
+                )
+                job_application_service.update_company_profile_research_plan(
+                    state.job_application_id, response
+                )
             logger.debug("RESPONSE FROM RESEARCH_PLANNER: ", response=response)
             sends = [
                 Send(
@@ -140,4 +152,18 @@ class CompanyProfilerAgent:
             return Command(goto=sends, update={"research_plan": response})
         except Exception as e:
             logger.error(f"Error running the researcher planner: {str(e)}")
+            raise e
+
+    def finalize_research(self, state: CompanyProfilerState, config: RunnableConfig):
+        try:
+            with get_session_context() as session:
+                job_application_service = ServiceRegistry.get_job_application_service(
+                    session
+                )
+                job_application_service.update_company_profile_research_results(
+                    state.job_application_id, state.research_results
+                )
+            return state
+        except Exception as e:
+            logger.error(f"Error finalizing the research: {str(e)}")
             raise e

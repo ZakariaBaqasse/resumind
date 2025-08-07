@@ -9,7 +9,7 @@ import { CustomResumesSection } from "./custom-resumes-section"
 import { DashboardHeader } from "./header"
 import { DashboardLoadingSkeleton } from "./loading-skeleton"
 import { QuickActions } from "./quick-actions"
-import ViewResumeDialog from "./view-reume-dialog"
+import ViewResumeDialog from "./view-resume-dialog"
 import { WelcomeSection } from "./welcome-section"
 
 export default function DashboardComponent() {

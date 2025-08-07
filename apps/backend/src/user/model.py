@@ -1,8 +1,11 @@
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List, TYPE_CHECKING
 from uuid import uuid4
 
-from sqlmodel import JSON, Column, Field, SQLModel
+from sqlmodel import JSON, Column, Field, SQLModel, Relationship
+
+if TYPE_CHECKING:
+    from src.job_applications.model import JobApplication
 
 
 class UserBase(SQLModel):
@@ -34,6 +37,11 @@ class User(UserBase, table=True):
         "schema": "auth",
     }
     password: Optional[str] = Field(default=None)
+    job_applications: List["JobApplication"] = Relationship(
+        cascade_delete=True,
+        back_populates="user",
+        sa_relationship_kwargs={"order_by": "JobApplication.created_at"},
+    )
 
     class Config:
         orm_mode = True

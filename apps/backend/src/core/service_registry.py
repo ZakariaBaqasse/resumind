@@ -57,3 +57,32 @@ class ServiceRegistry:
             # Store the service instance
             cls._instances[service_type][session_id] = service
             return service
+
+    @classmethod
+    def get_job_application_service(cls, session: Session):
+        """Get or create a JobApplication singleton for this session"""
+        with cls._lock:
+            session_id = id(session)
+            service_type = "job_application_service"
+
+            # Initialize container if needed
+            if service_type not in cls._instances:
+                cls._instances[service_type] = {}
+
+            # Return existing instance if available
+            if session_id in cls._instances[service_type]:
+                return cls._instances[service_type][session_id]
+
+            from src.job_applications.repositories.job_application_repository import (
+                JobApplicationRepository,
+            )
+            from src.job_applications.services.job_application_service import (
+                JobApplicationService,
+            )
+
+            job_application_repository = JobApplicationRepository(session)
+            service = JobApplicationService(job_application_repository)
+
+            # Store the service instance
+            cls._instances[service_type][session_id] = service
+            return service

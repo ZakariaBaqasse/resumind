@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from fastapi import HTTPException
 from langchain_community.document_loaders import PDFPlumberLoader
-from langchain_together import ChatTogether
+from langchain_mistralai import ChatMistralAI
 
 from src.core.types import Resume
 from src.user.model import User
@@ -12,10 +12,9 @@ from src.user.prompts.extract_resume_content_prompt import (
     extract_resume_content_system_prompt,
 )
 from src.user.repository import UserRepository
+from src.core.constants import MODEL_NAME
 
 logger = getLogger(__name__)
-
-MODEL_NAME = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
 
 
 class UserService:
@@ -108,7 +107,9 @@ class UserService:
             loader = PDFPlumberLoader(save_path)
             docs = loader.load()
             resume_content = "\n\n".join([doc.page_content for doc in docs])
-            model = ChatTogether(model=MODEL_NAME).with_structured_output(schema=Resume)
+            model = ChatMistralAI(model=MODEL_NAME).with_structured_output(
+                schema=Resume
+            )
             response = await model.ainvoke(
                 [
                     ("system", extract_resume_content_system_prompt),

@@ -12,6 +12,31 @@ class ResumeGenerationStatus(Enum):
     FAILED = "failed"
 
 
+class EventStatus(str, Enum):
+    STARTED = "started"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
+class EventName(str, Enum):
+    PIPELINE_UPDATE = "pipeline.update"
+    PIPELINE_STEP = "pipeline.step"
+    RESEARCH_CATEGORY = "research.category"
+    TOOL_EXECUTION = "tool.execution"
+    ARTIFACT_GENERATED = "artifact.generated"
+    PIPELINE_COMPLETED = "pipeline.completed"
+    PIPELINE_FAILED = "pipeline.failed"
+
+
+class PipelineStep(str, Enum):
+    RESUME_GENERATION = "resume_generation"
+    COMPANY_DISCOVERY = "company_discovery"
+    RESEARCH_PLANNING = "research_planning"
+    RESEARCH = "research"
+    RESUME_DRAFT = "resume_draft"
+    COVER_LETTER = "cover_letter"
+
+
 class ResearchCategory(BaseModel):
     category_name: str = Field(
         ...,

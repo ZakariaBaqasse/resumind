@@ -16,7 +16,7 @@ from langgraph.types import Command, Send
 from src.configs.database_config import get_session_context
 from src.core.constants import MODEL_NAME, STRUCTURED_OUTPUT_MAX_RETRY
 from src.core.service_registry import ServiceRegistry
-from src.job_applications.types import ResearchPlan
+from src.job_applications.types import ResearchPlan, EventStatus, PipelineStep
 from src.job_applications.prompts.company_profiler import (
     research_planner_system_prompt,
 )
@@ -28,7 +28,7 @@ from src.job_applications.agents.company_profiler_agents.company_discovery_agent
 )
 from src.job_applications.types import DiscoveredCompanyProfile
 from src.core.rate_limit_handlers import RateLimiter, retry_with_backoff
-
+from src.job_applications.types import ResumeGenerationStatus
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ def last_value_reducer(old, new):
 
 
 class CompanyProfilerState(BaseModel):
-    job_application_id: str
+    job_application_id: Annotated[str, last_value_reducer]
     job_role: Annotated[str, last_value_reducer]
     job_description: str
     company: Annotated[str, last_value_reducer]
@@ -73,12 +73,6 @@ class CompanyProfilerAgent:
     def build_graph(self, checkpointer=InMemorySaver()) -> CompiledStateGraph:
         """
         Build the graph for the Company profiler agent.
-
-        Args:
-            checkpointer: The checkpointer to use for the graph.
-
-        Returns:
-            The compiled graph.
         """
         try:
             builder = StateGraph(CompanyProfilerState)
@@ -109,6 +103,14 @@ class CompanyProfilerAgent:
         self, state: CompanyProfilerState, config: RunnableConfig
     ):
         try:
+            with get_session_context() as session:
+                event_service = ServiceRegistry.get_events_service(session)
+                event_service.emit_pipeline_step(
+                    job_application_id=state.job_application_id,
+                    step=PipelineStep.RESEARCH_PLANNING,
+                    status=EventStatus.STARTED,
+                    message="Planning research",
+                )
             async with self.rate_limiter:
                 configured_model = self.model.with_structured_output(
                     ResearchPlan
@@ -140,6 +142,7 @@ class CompanyProfilerAgent:
                 Send(
                     "research_executor",
                     {
+                        "job_application_id": state.job_application_id,
                         "company": state.company,
                         "job_role": state.job_role,
                         "research_category": category,
@@ -151,6 +154,19 @@ class CompanyProfilerAgent:
             ]
             return Command(goto=sends, update={"research_plan": response})
         except Exception as e:
+            with get_session_context() as session:
+                job_application_service = ServiceRegistry.get_job_application_service(
+                    session
+                )
+                event_service = ServiceRegistry.get_events_service(session)
+                job_application_service.update_job_application_status(
+                    state.job_application_id, ResumeGenerationStatus.FAILED
+                )
+                event_service.emit_pipeline_failed(
+                    job_application_id=state.job_application_id,
+                    message="Research planning failed",
+                    error={"message": str(e)},
+                )
             logger.error(f"Error running the researcher planner: {str(e)}")
             raise e
 
@@ -160,10 +176,30 @@ class CompanyProfilerAgent:
                 job_application_service = ServiceRegistry.get_job_application_service(
                     session
                 )
+                event_service = ServiceRegistry.get_events_service(session)
                 job_application_service.update_company_profile_research_results(
                     state.job_application_id, state.research_results
                 )
+                event_service.emit_pipeline_step(
+                    job_application_id=state.job_application_id,
+                    step=PipelineStep.RESEARCH,
+                    status=EventStatus.SUCCEEDED,
+                    message="Research completed",
+                )
             return state
         except Exception as e:
+            with get_session_context() as session:
+                job_application_service = ServiceRegistry.get_job_application_service(
+                    session
+                )
+                event_service = ServiceRegistry.get_events_service(session)
+                job_application_service.update_job_application_status(
+                    state.job_application_id, ResumeGenerationStatus.FAILED
+                )
+                event_service.emit_pipeline_failed(
+                    job_application_id=state.job_application_id,
+                    message="Finalizing research failed",
+                    error={"message": str(e)},
+                )
             logger.error(f"Error finalizing the research: {str(e)}")
             raise e

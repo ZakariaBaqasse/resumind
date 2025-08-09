@@ -9,6 +9,7 @@ from src.job_applications.repositories.job_application_repository import (
 from src.job_applications.types import (
     DiscoveredCompanyProfile,
     ResearchPlan,
+    ResumeGenerationStatus,
 )
 
 
@@ -130,5 +131,20 @@ class JobApplicationService:
         except Exception as e:
             logger.error(
                 f"ERROR: in JobApplicationService in update_company_profile_research_plan: {str(e)}"
+            )
+            raise e
+
+    def update_job_application_status(
+        self, job_application_id: str, status: ResumeGenerationStatus
+    ):
+        try:
+            job_application = self.get_job_application(job_application_id)
+            if not job_application:
+                raise Exception("No job application found with the given ID")
+            job_application.resume_generation_status = status
+            return self.update_job_application(job_application)
+        except Exception as e:
+            logger.error(
+                f"ERROR: in JobApplicationService in update_job_application_status: {str(e)}"
             )
             raise e

@@ -17,7 +17,12 @@ import operator
 from langgraph.types import Command
 
 from src.core.constants import MODEL_NAME
-from src.job_applications.types import ResearchCategory, DiscoveredCompanyProfile
+from src.job_applications.types import (
+    ResearchCategory,
+    DiscoveredCompanyProfile,
+    EventStatus,
+    PipelineStep,
+)
 from src.job_applications.prompts.company_profiler import (
     research_executor_system_prompt,
 )
@@ -27,11 +32,15 @@ from src.job_applications.tools import (
     ResearchDoneTool,
 )
 from src.core.rate_limit_handlers import RateLimiter, retry_with_backoff
+from src.configs.database_config import get_session_context
+from src.core.service_registry import ServiceRegistry
+from src.job_applications.types import ResumeGenerationStatus
 
 logger = logging.getLogger(__name__)
 
 
 class ResearchExecutorState(BaseModel):
+    job_application_id: str
     company: str
     job_role: str
     messages: Annotated[List[BaseMessage], operator.add]
@@ -56,12 +65,6 @@ class ResearchExecutor:
     def build_graph(self, checkpointer=InMemorySaver()) -> CompiledStateGraph:
         """
         Build the graph for the Company profiler agent.
-
-        Args:
-            checkpointer: The checkpointer to use for the graph.
-
-        Returns:
-            The compiled graph.
         """
         try:
             builder = StateGraph(ResearchExecutorState)
@@ -90,6 +93,15 @@ class ResearchExecutor:
             messages_for_invocation = list(state.messages)
             new_messages = []
             if state.iteration == 1:
+                with get_session_context() as session:
+                    event_service = ServiceRegistry.get_events_service(session)
+                    event_service.emit_research_category(
+                        job_application_id=state.job_application_id,
+                        category_name=state.research_category.category_name,
+                        status=EventStatus.STARTED,
+                        iteration=1,
+                        message="Starting research category",
+                    )
                 initial_messages = [
                     SystemMessage(content=research_executor_system_prompt),
                     HumanMessage(
@@ -115,6 +127,24 @@ class ResearchExecutor:
                     final_results = response.tool_calls[0]["args"]["results"][
                         state.research_category.category_name
                     ]
+                    data_payload = None
+                    try:
+                        if isinstance(final_results, list):
+                            data_payload = {"findings_count": len(final_results)}
+                        elif isinstance(final_results, dict):
+                            data_payload = {"keys_count": len(final_results)}
+                    except Exception:
+                        data_payload = None
+                    with get_session_context() as session:
+                        event_service = ServiceRegistry.get_events_service(session)
+                        event_service.emit_research_category(
+                            job_application_id=state.job_application_id,
+                            category_name=state.research_category.category_name,
+                            status=EventStatus.SUCCEEDED,
+                            iteration=state.iteration,
+                            message="Finished research category",
+                            data=data_payload,
+                        )
                     return Command(
                         goto=END,
                         update={
@@ -141,6 +171,19 @@ class ResearchExecutor:
                     update={"messages": new_messages},
                 )
         except Exception as e:
+            with get_session_context() as session:
+                job_application_service = ServiceRegistry.get_job_application_service(
+                    session
+                )
+                event_service = ServiceRegistry.get_events_service(session)
+                job_application_service.update_job_application_status(
+                    state.job_application_id, ResumeGenerationStatus.FAILED
+                )
+                event_service.emit_pipeline_failed(
+                    job_application_id=state.job_application_id,
+                    message="Research executor failed",
+                    error={"message": str(e)},
+                )
             logger.error(f"Error running the researcher executor: {str(e)}")
             raise e
 
@@ -148,7 +191,7 @@ class ResearchExecutor:
         try:
             tool_responses = await asyncio.gather(
                 *[
-                    self.process_tool_call_safely(tool_call)
+                    self.process_tool_call_safely(tool_call, state.job_application_id)
                     for tool_call in state.messages[-1].tool_calls
                 ]
             )
@@ -158,10 +201,25 @@ class ResearchExecutor:
             ]
             return {"messages": tool_responses}
         except Exception as e:
+            with get_session_context() as session:
+                job_application_service = ServiceRegistry.get_job_application_service(
+                    session
+                )
+                event_service = ServiceRegistry.get_events_service(session)
+                job_application_service.update_job_application_status(
+                    state.job_application_id, ResumeGenerationStatus.FAILED
+                )
+                event_service.emit_pipeline_failed(
+                    job_application_id=state.job_application_id,
+                    message="Error while executing research tools",
+                    error={"message": str(e)},
+                )
             logger.error(f"Error running the researcher tools: {str(e)}")
             raise e
 
-    async def process_tool_call_safely(self, tool_call: Dict[str, Any]):
+    async def process_tool_call_safely(
+        self, tool_call: Dict[str, Any], job_application_id: str
+    ):
         try:
             tools = [tavily_tool, scraping_tool]
             tool_to_invoke = next(
@@ -169,6 +227,31 @@ class ResearchExecutor:
             )
             if not tool_to_invoke:
                 raise ValueError(f"Tool {tool_call['name']} not found")
+            with get_session_context() as session:
+                args = tool_call.get("args", {}) or {}
+                friendly_message = "Starting tool execution"
+                args_summary = {}
+
+                if tool_to_invoke.name == tavily_tool.name:
+                    q = str(args.get("query", ""))[:200]
+                    friendly_message = f"Performing a web search for '{q[:80]}'"
+                    args_summary = {"query": q}
+
+                elif tool_to_invoke.name == scraping_tool.name:
+                    url = str(args.get("url", ""))[:200]
+                    friendly_message = f"Scraping {url}"
+                    args_summary = {"url": url}
+
+                event_service.emit_tool_execution(
+                    job_application_id=job_application_id,
+                    tool_name=tool_to_invoke.name,
+                    status=EventStatus.STARTED,
+                    step=PipelineStep.RESEARCH,  # or COMPANY_DISCOVERY where relevant
+                    message=friendly_message,
+                    data={"args_summary": args_summary} if args_summary else None,
+                )
+
+            result = None
             if tool_to_invoke.name == scraping_tool.name:
                 logger.debug("Invoking tool scraping tool")
                 async with self.rate_limiter:
@@ -180,13 +263,33 @@ class ResearchExecutor:
                 result = await retry_with_backoff(
                     lambda: tool_to_invoke.ainvoke(input=tool_call["args"])
                 )
+
+            with get_session_context() as session:
+                event_service = ServiceRegistry.get_events_service(session)
+                event_service.emit_tool_execution(
+                    job_application_id=job_application_id,
+                    tool_name=tool_to_invoke.name,
+                    status=EventStatus.SUCCEEDED,
+                    step=PipelineStep.RESEARCH,
+                    message="Tool execution completed",
+                )
             return ToolMessage(
                 content=result, tool_call_id=tool_call["id"], status="success"
             )
         except Exception as e:
             logger.error(f"Error running process tool call {str(e)}")
+            with get_session_context() as session:
+                event_service = ServiceRegistry.get_events_service(session)
+                event_service.emit_tool_execution(
+                    job_application_id=job_application_id,
+                    tool_name=tool_call.get("name", "unknown"),
+                    status=EventStatus.FAILED,
+                    step=PipelineStep.RESEARCH,
+                    message="Tool execution failed",
+                    error={"message": str(e)},
+                )
             return ToolMessage(
-                content=f"Error executing tool {tool_call["name"]} please try again",
+                content=f"Error executing tool {tool_call['name']} please try again",
                 tool_call_id=tool_call["id"],
                 status="error",
             )

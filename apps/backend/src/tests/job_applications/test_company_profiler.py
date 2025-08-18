@@ -1,8 +1,13 @@
 import asyncio
+import pytest
+import uuid
 from langfuse.langchain import CallbackHandler
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
 from langgraph.checkpoint.memory import InMemorySaver
+
+from src.configs.database_config import get_session_context
+from src.core.service_registry import ServiceRegistry
 
 from src.job_applications.agents.company_profiler_agents.company_profiler import (
     CompanyProfilerAgent,
@@ -32,7 +37,8 @@ from src.job_applications.types import (
     WebPresenceQuality,
     ResearchDifficulty,
 )
-
+from src.user.model import User
+from src.job_applications.model import JobApplication, Event
 
 TEST_COMPANY_NAME = "Lumenalta"
 TEST_JOB_ROLE = "Javascript Fullstack Engineer - Senior"
@@ -75,19 +81,53 @@ If you’re a passionate, career-focused developer ready to make a lasting impac
 """
 
 
-def test_company_profiler_agent():
+@pytest.fixture
+def test_user():
+    """Fixture to create a test user"""
+    with get_session_context() as session:
+        test_user = User(
+            id=str(uuid.uuid4()), email="test@example.com", name="Test User"
+        )
+        session.add(test_user)
+        session.commit()
+        yield test_user
+        # Cleanup after test
+        session.delete(test_user)
+        session.commit()
+
+
+@pytest.fixture
+def test_job_application(test_user):
+    """Fixture to create a test job_application"""
+    with get_session_context() as session:
+        test_job_application = JobApplication(
+            job_description=TEST_JOB_DESCRIPTION,
+            company_name=TEST_COMPANY_NAME,
+            job_title=TEST_JOB_ROLE,
+            user_id=test_user.id,
+        )
+        session.add(test_job_application)
+        session.commit()
+        yield test_job_application
+        # Cleanup after test
+        session.delete(test_job_application)
+        session.commit()
+
+
+def test_company_profiler_agent(test_job_application):
+    input_state = CompanyProfilerState(
+        job_application_id=test_job_application.id,
+        job_role=test_job_application.job_title,
+        job_description=test_job_application.job_description,
+        company=test_job_application.company_name,
+    )
     company_profiler_agent = CompanyProfilerAgent()
     graph: CompiledStateGraph = company_profiler_agent.build_graph()
     configurable = {
-        "thread_id": "123",
+        "thread_id": test_job_application.id,
     }
     config = RunnableConfig(callbacks=[CallbackHandler()], configurable=configurable)
-    state = CompanyProfilerState(
-        job_role=TEST_JOB_ROLE,
-        job_description=TEST_JOB_DESCRIPTION,
-        company=TEST_COMPANY_NAME,
-    )
-    result = asyncio.run(graph.ainvoke(input=state, config=config))
+    result = asyncio.run(graph.ainvoke(input=input_state, config=config))
     assert result
 
 

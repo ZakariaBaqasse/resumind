@@ -25,15 +25,6 @@ export default function DashboardComponent() {
     }
   }, [user, isLoading, router])
 
-  const handleCreateResume = (data: {
-    jobTitle: string
-    companyName: string
-    jobDescription: string
-  }) => {
-    // Handle resume creation logic
-    console.log("Creating resume for:", data)
-  }
-
   const handleViewResume = () => {
     setIsViewingResume(true)
   }
@@ -66,7 +57,6 @@ export default function DashboardComponent() {
           resume={user.initial_resume.resume}
           onViewResume={handleViewResume}
           onEditResume={handleEditResume}
-          onCreateResume={handleCreateResume}
         />
 
         <CustomResumesSection

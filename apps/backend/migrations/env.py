@@ -36,6 +36,28 @@ target_metadata = SQLModel.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+# Define tables to ignore during migrations
+IGNORED_TABLES = {
+    "checkpoint_migrations",
+    "checkpoint_writes",
+    "checkpoints",
+    "checkpoint_blobs",
+    "celery_taskmeta",
+    "celery_tasksetmeta",
+}
+
+
+def include_object(object, name, type_, reflected, compare_to):
+    """Determine which database objects to include in the autogeneration process."""
+    if type_ == "table" and name in IGNORED_TABLES:
+        return False
+    if type_ == "index" and any(
+        name.startswith(f"{table}_") for table in IGNORED_TABLES
+    ):
+        return False
+    return True
+
+
 db_url = os.environ.get("DATABASE_URL")
 if db_url:
     config.set_main_option("sqlalchemy.url", db_url)
@@ -62,6 +84,7 @@ def run_migrations_offline() -> None:
         compare_type=True,
         # This is crucial for SQLModel type support
         user_module_prefix=None,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -88,6 +111,7 @@ def run_migrations_online() -> None:
             compare_type=True,
             # This is crucial for SQLModel type support
             user_module_prefix=None,
+            include_object=include_object,
         )
 
         with context.begin_transaction():

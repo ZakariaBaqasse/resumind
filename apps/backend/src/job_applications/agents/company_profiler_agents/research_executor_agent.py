@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Annotated, List, Dict, Any
+from typing import Annotated, List, Dict, Any, Optional
 from datetime import date
 from langchain_mistralai import ChatMistralAI
 from pydantic import BaseModel
@@ -54,11 +54,11 @@ class ResearchExecutorState(BaseModel):
 class ResearchExecutor:
     def __init__(
         self,
-        model=ChatMistralAI(model=MODEL_NAME),
+        model: Optional[ChatMistralAI] = None,
         debug: bool = False,
         rate_limiter=None,
     ) -> None:
-        self.model = model
+        self.model = model or ChatMistralAI(model=MODEL_NAME)
         self.debug = debug
         self.rate_limiter = rate_limiter or RateLimiter(1.0)
 
@@ -121,10 +121,12 @@ class ResearchExecutor:
                     lambda: model_with_tools.ainvoke(messages_for_invocation)
                 )
             new_messages.append(response)
-
-            if response.tool_calls:
-                if response.tool_calls[0]["name"] == "ResearchDoneTool":
-                    final_results = response.tool_calls[0]["args"]["results"][
+            tool_calls = getattr(response, "tool_calls", None) or getattr(
+                response, "additional_kwargs", {}
+            ).get("tool_calls", [])
+            if tool_calls and len(tool_calls) > 0:
+                if tool_calls[0]["name"] == "ResearchDoneTool":
+                    final_results = tool_calls[0]["args"]["results"][
                         state.research_category.category_name
                     ]
                     data_payload = None
@@ -136,6 +138,14 @@ class ResearchExecutor:
                     except Exception:
                         data_payload = None
                     with get_session_context() as session:
+                        job_application_service = (
+                            ServiceRegistry.get_job_application_service(session)
+                        )
+                        job_application_service.append_company_profile_category_research_results(
+                            state.job_application_id,
+                            state.research_category.category_name,
+                            final_results,
+                        )
                         event_service = ServiceRegistry.get_events_service(session)
                         event_service.emit_research_category(
                             job_application_id=state.job_application_id,
@@ -172,20 +182,24 @@ class ResearchExecutor:
                 )
         except Exception as e:
             with get_session_context() as session:
-                job_application_service = ServiceRegistry.get_job_application_service(
-                    session
-                )
                 event_service = ServiceRegistry.get_events_service(session)
-                job_application_service.update_job_application_status(
-                    state.job_application_id, ResumeGenerationStatus.FAILED
-                )
-                event_service.emit_pipeline_failed(
+                event_service.emit_research_category(
                     job_application_id=state.job_application_id,
-                    message="Research executor failed",
+                    category_name=state.research_category.category_name,
+                    status=EventStatus.FAILED,
+                    iteration=state.iteration,
+                    message=f"Research for {state.research_category.category_name} has failed",
                     error={"message": str(e)},
                 )
             logger.error(f"Error running the researcher executor: {str(e)}")
-            raise e
+            return Command(
+                goto=END,
+                update={
+                    "failed_research_categories": [
+                        state.research_category.category_name
+                    ]
+                },
+            )
 
     async def run_research_tools(self, state: ResearchExecutorState):
         try:
@@ -202,20 +216,17 @@ class ResearchExecutor:
             return {"messages": tool_responses}
         except Exception as e:
             with get_session_context() as session:
-                job_application_service = ServiceRegistry.get_job_application_service(
-                    session
-                )
                 event_service = ServiceRegistry.get_events_service(session)
-                job_application_service.update_job_application_status(
-                    state.job_application_id, ResumeGenerationStatus.FAILED
-                )
-                event_service.emit_pipeline_failed(
+                event_service.emit_research_category(
                     job_application_id=state.job_application_id,
-                    message="Error while executing research tools",
+                    category_name=state.research_category.category_name,
+                    status=EventStatus.FAILED,
+                    iteration=state.iteration,
+                    message=f"Research for {state.research_category.category_name} has failed",
                     error={"message": str(e)},
                 )
             logger.error(f"Error running the researcher tools: {str(e)}")
-            raise e
+            raise {"messages": []}
 
     async def process_tool_call_safely(
         self, tool_call: Dict[str, Any], job_application_id: str
@@ -228,6 +239,7 @@ class ResearchExecutor:
             if not tool_to_invoke:
                 raise ValueError(f"Tool {tool_call['name']} not found")
             with get_session_context() as session:
+                event_service = ServiceRegistry.get_events_service(session)
                 args = tool_call.get("args", {}) or {}
                 friendly_message = "Starting tool execution"
                 args_summary = {}

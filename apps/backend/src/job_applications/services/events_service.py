@@ -67,7 +67,7 @@ class EventService:
     ) -> Event:
         return self.emit_event(
             job_application_id=job_application_id,
-            event_name=EventName.PIPELINE_STEP.value,
+            event_name=EventName.PIPELINE_STEP,
             status=status.value,
             step=step.value,
             message=message,
@@ -89,9 +89,9 @@ class EventService:
     ) -> Event:
         return self.emit_event(
             job_application_id=job_application_id,
-            event_name=EventName.RESEARCH_CATEGORY.value,
-            status=status.value,
-            step=PipelineStep.RESEARCH.value,
+            event_name=EventName.RESEARCH_CATEGORY,
+            status=status,
+            step=PipelineStep.RESEARCH,
             category_name=category_name,
             iteration=iteration,
             message=message,
@@ -113,9 +113,9 @@ class EventService:
     ) -> Event:
         return self.emit_event(
             job_application_id=job_application_id,
-            event_name=EventName.TOOL_EXECUTION.value,
-            status=status.value,
-            step=step.value,
+            event_name=EventName.TOOL_EXECUTION,
+            status=status,
+            step=step,
             tool_name=tool_name,
             message=message,
             data=data,
@@ -142,8 +142,8 @@ class EventService:
         }
         return self.emit_event(
             job_application_id=job_application_id,
-            event_name=EventName.ARTIFACT_GENERATED.value,
-            status=EventStatus.SUCCEEDED.value,
+            event_name=EventName.ARTIFACT_GENERATED,
+            status=EventStatus.SUCCEEDED,
             step=step.value,
             message=message,
             data=payload,
@@ -158,8 +158,8 @@ class EventService:
     ) -> Event:
         return self.emit_event(
             job_application_id=job_application_id,
-            event_name=EventName.PIPELINE_COMPLETED.value,
-            status=EventStatus.SUCCEEDED.value,
+            event_name=EventName.PIPELINE_COMPLETED,
+            status=EventStatus.SUCCEEDED,
             message=message,
             data=data,
         )
@@ -174,8 +174,8 @@ class EventService:
     ) -> Event:
         return self.emit_event(
             job_application_id=job_application_id,
-            event_name=EventName.PIPELINE_FAILED.value,
-            status=EventStatus.FAILED.value,
+            event_name=EventName.PIPELINE_FAILED,
+            status=EventStatus.FAILED,
             message=message,
             error=error,
             data=data,
@@ -191,7 +191,7 @@ class EventService:
     ) -> Event:
         return self.emit_event(
             job_application_id=job_application_id,
-            event_name=EventName.PIPELINE_UPDATE.value,
+            event_name=EventName.PIPELINE_UPDATE,
             status=None,
             step=step,
             message=message,

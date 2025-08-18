@@ -1,7 +1,7 @@
 import asyncio
 import operator
 import logging
-from typing import Dict, Any, Annotated, List
+from typing import Dict, Any, Annotated, List, Optional
 from datetime import date
 from pydantic import BaseModel
 from langchain_mistralai import ChatMistralAI
@@ -52,11 +52,11 @@ class CompanyDiscoveryAgentState(BaseModel):
 class CompanyDiscoveryAgent:
     def __init__(
         self,
-        model=ChatMistralAI(model=MODEL_NAME),
+        model: Optional[ChatMistralAI] = None,
         debug: bool = False,
         rate_limiter=None,
     ):
-        self.model = model
+        self.model = model or ChatMistralAI(model=MODEL_NAME)
         self.debug = debug
         self.rate_limiter = rate_limiter or RateLimiter(1.0)
 
@@ -181,6 +181,13 @@ class CompanyDiscoveryAgent:
                 job_application_service.update_job_application_status(
                     state.job_application_id, ResumeGenerationStatus.FAILED
                 )
+                event_service.emit_pipeline_step(
+                    job_application_id=state.job_application_id,
+                    step=PipelineStep.COMPANY_DISCOVERY,
+                    status=EventStatus.FAILED,
+                    message="Company discovery failed",
+                    error={"message": str(e)},
+                )
                 event_service.emit_pipeline_failed(
                     job_application_id=state.job_application_id,
                     message="Company discovery failed",
@@ -211,6 +218,13 @@ class CompanyDiscoveryAgent:
                 job_application_service.update_job_application_status(
                     state.job_application_id, ResumeGenerationStatus.FAILED
                 )
+                event_service.emit_pipeline_step(
+                    job_application_id=state.job_application_id,
+                    step=PipelineStep.COMPANY_DISCOVERY,
+                    status=EventStatus.FAILED,
+                    message="Company discovery failed",
+                    error={"message": str(e)},
+                )
                 event_service.emit_pipeline_failed(
                     job_application_id=state.job_application_id,
                     message="Error while executing discovery tools",
@@ -231,6 +245,7 @@ class CompanyDiscoveryAgent:
                 raise ValueError(f"Tool {tool_call['name']} not found")
             logger.debug(f"Invoking tool {tool_call['name']}")
             with get_session_context() as session:
+                event_service = ServiceRegistry.get_events_service(session)
                 args = tool_call.get("args", {}) or {}
                 friendly_message = "Starting tool execution"
                 args_summary = {}

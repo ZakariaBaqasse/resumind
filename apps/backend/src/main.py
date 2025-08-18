@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.auth.router import auth_router
 from src.user.router import user_router
+from src.job_applications.router import job_application_router
 
 # Configure logging
 logging.basicConfig(
@@ -31,6 +32,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth_router)
 app.include_router(user_router)
+app.include_router(job_application_router)
 
 
 @app.get("/status")

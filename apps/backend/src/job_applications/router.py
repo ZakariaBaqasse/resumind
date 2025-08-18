@@ -35,7 +35,7 @@ job_application_router = APIRouter(prefix="/application", tags=["job application
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "../../uploads")
 
 
-@job_application_router.post("/application/start-generation")
+@job_application_router.post("/start-generation")
 def start_application_resume_generation(
     application_data: CreateJobApplicationRequest,
     current_user: User = Depends(get_current_user),
@@ -46,11 +46,14 @@ def start_application_resume_generation(
     try:
         job_application = job_application_service.create_job_application(
             JobApplication(
-                **application_data,
+                job_description=application_data.job_description,
+                job_title=application_data.job_role,
+                company_name=application_data.company,
                 user_id=current_user.id,
                 originalResumeSnapshot=current_user.initial_resume,
             )
         )
+
         resume_generation_job = start_resume_generation.delay(
             job_application_id=job_application.id
         )
@@ -59,18 +62,20 @@ def start_application_resume_generation(
         updated_application = job_application_service.update_job_application(
             job_application
         )
-        return {
-            "status_code": 200,
-            "detail": "started the generation of the resume",
-            "job_application": updated_application,
-        }
+        return updated_application
     except HTTPException as e:
+        logger.error(
+            f"ERROR in job_application router start_application_resume_generation {str(e)}"
+        )
         return e
-    except Exception:
+    except Exception as e:
+        logger.error(
+            f"ERROR in job_application router start_application_resume_generation {str(e)}"
+        )
         return HTTPException(status_code=500, detail="Internal Server error")
 
 
-@job_application_router.get("/application/{application_id}/stream/{token}")
+@job_application_router.get("/{application_id}/stream/{token}")
 async def application_snapshot_sse(
     application_id: str,
     token: str,
@@ -80,13 +85,17 @@ async def application_snapshot_sse(
         get_job_application_service
     ),
     poll_interval_ms: int = 1000,
-    events_limit: int = 200,  # limit how many events to include per snapshot
+    events_limit: int = 200,
 ):
     """
     SSE stream of the full JobApplication snapshot (including related events).
-    Sends a new frame only when the JobApplication or its events change.
+    Sends a new frame on every poll to ensure real-time updates.
     """
-    current_user = get_current_user(token, user_service)
+    try:
+        current_user = await get_current_user(token, user_service)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
     # Authorization: ensure the job application belongs to the current user
     app_obj = job_application_service.get_job_application(application_id)
     if not app_obj:
@@ -95,17 +104,6 @@ async def application_snapshot_sse(
         raise HTTPException(
             status_code=403, detail="Not authorized for this application"
         )
-
-    def _sig(app: JobApplication) -> Tuple[Optional[datetime], Optional[datetime], int]:
-        # Signature to detect changes: (app.updated_at, latest_event_at, total_events)
-        last_event_at = None
-        total_events = len(getattr(app, "events", []) or [])
-        if total_events:
-            last_event_at = max(
-                (e.created_at for e in app.events if getattr(e, "created_at", None)),
-                default=None,
-            )
-        return (app.updated_at, last_event_at, total_events)
 
     def _serialize_event(ev) -> Dict[str, Any]:
         return {
@@ -149,53 +147,82 @@ async def application_snapshot_sse(
         }
 
     def _format_sse(evt_id: str, payload: Dict[str, Any]) -> str:
-        # Use event id as combination of updated_at and last event time for idempotence
         return f"id: {evt_id}\nevent: application.snapshot\ndata: {json.dumps(payload, default=str)}\n\n"
 
     async def event_generator():
-        last_signature: Optional[Tuple[Optional[datetime], Optional[datetime], int]] = (
-            None
-        )
-        keepalive_counter = 0
+        counter = 0
+        last_status = None
 
         while True:
             if await request.is_disconnected():
+                logger.info(f"Client disconnected for application {application_id}")
                 break
 
             try:
-                app = job_application_service.get_job_application(application_id)
+                app = job_application_service.get_job_application(
+                    application_id, refresh=True
+                )
 
                 if not app:
                     yield _format_sse("gone", {"detail": "not_found"})
                     break
 
-                sig = _sig(app)
-                changed = sig != last_signature
+                current_status = app.resume_generation_status
+                status_changed = current_status != last_status
+                last_status = current_status
 
-                if changed:
-                    payload = _serialize_job_application(app)
-                    # Frame id uses updated_at + last event created_at for client dedupe
-                    updated_part = payload["updated_at"] or "0"
-                    last_ev = (
-                        payload["events"][-1]["created_at"]
-                        if payload["events"]
-                        else "0"
-                    )
-                    yield _format_sse(f"{updated_part}:{last_ev}", payload)
-                    last_signature = sig
-                    keepalive_counter = 0
-                else:
-                    keepalive_counter += 1
-                    if keepalive_counter >= max(1, int(15000 / poll_interval_ms)):
-                        # comment keep-alive
-                        yield ": keep-alive\n\n"
-                        keepalive_counter = 0
+                # Always send the current state
+                payload = _serialize_job_application(app)
+                event_id = (
+                    f"{app.updated_at.isoformat() if app.updated_at else '0'}:{counter}"
+                )
+
+                # Add status change indicator
+                if status_changed:
+                    payload["status_changed"] = True
+                    payload["previous_status"] = last_status
+
+                yield _format_sse(event_id, payload)
+                counter += 1
+
+                # Handle terminal states
+                if current_status in [
+                    ResumeGenerationStatus.FAILED,
+                    ResumeGenerationStatus.COMPLETED,
+                ]:
+                    # Send completion event and close after a delay
+                    completion_payload = {
+                        **payload,
+                        "stream_ending": True,
+                        "final_status": current_status.value,
+                    }
+                    yield _format_sse(f"completion-{event_id}", completion_payload)
+
+                    # Give client time to process the final event
+                    await asyncio.sleep(1.0)
+                    break
 
                 await asyncio.sleep(max(0.1, poll_interval_ms / 1000.0))
+
             except Exception as e:
+                logger.error(
+                    f"Error in SSE stream for application {application_id}: {e}"
+                )
                 yield _format_sse(
                     "stream-error", {"detail": "stream_error", "message": str(e)}
                 )
                 break
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    from os import getenv
+
+    headers = {
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+        # CORS for SSE
+        "Access-Control-Allow-Origin": getenv("FRONTEND_URL", "http://localhost:3000"),
+        "Access-Control-Allow-Credentials": "true",
+    }
+    return StreamingResponse(
+        event_generator(), media_type="text/event-stream", headers=headers
+    )

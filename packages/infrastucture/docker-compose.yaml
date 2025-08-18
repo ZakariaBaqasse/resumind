@@ -60,7 +60,7 @@ services:
     volumes:
       - ../../apps/backend/src:/app/src
       - ../../logs:/app/logs
-    command: celery -A src.celery_app worker -E -l INFO -Q workflow -O fair --concurrency=8
+    command: celery -A src.celery_app worker -E -l INFO -Q generate_resume -O fair --concurrency=8
     shm_size: 2gb
 
   flower:

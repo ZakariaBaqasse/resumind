@@ -5,6 +5,8 @@ from celery import Celery
 from celery.signals import (
     task_failure,
 )
+import src.user.model
+import src.job_applications.model
 
 
 logger = logging.getLogger(__name__)
@@ -77,6 +79,19 @@ logger.info(f"Celery queue configured with broker: {app.conf.broker_url}!")
 task_routes = {
     "src.job_applications.generate_resume_job.*": {"queue": "generate_resume"},
 }
+
+
+def _to_int(env_name: str, default: int) -> int:
+    val = os.environ.get(env_name, None)
+    if val is None:
+        return default
+    try:
+        return int(val)
+    except ValueError:
+        logger.warning(f"Invalid int for {env_name}={val}, using default {default}")
+        return default
+
+
 # Optional configuration
 app.conf.update(
     task_serializer="json",
@@ -94,12 +109,12 @@ app.conf.update(
     task_send_sent_event=True,
     result_extended=True,
     # Add task routing
-    # Set concurrency for different queues (can be overridden at worker start)
-    worker_concurrency=os.environ.get("CELERY_CONCURRENCY", 4),
-    # Prefetch multiplier (lower for longer tasks)
+    # Concurrency & lifecycle
+    worker_concurrency=_to_int("CELERY_CONCURRENCY", 4),
     worker_prefetch_multiplier=1,
-    # Task acks late to prevent losing tasks if worker crashes
     task_acks_late=True,
+    # Recycle workers to avoid gradual memory growth from async libs
+    worker_max_tasks_per_child=_to_int("CELERY_MAX_TASKS_PER_CHILD", 100),
     # Add result backend settings
     result_backend_transport_options={
         "retry_policy": {

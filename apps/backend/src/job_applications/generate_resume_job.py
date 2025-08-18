@@ -1,10 +1,11 @@
+import asyncio
 import os
 import logging
 import psycopg
 from uuid import uuid4
 
 
-from asgiref.sync import async_to_sync
+import anyio
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langchain_core.runnables import RunnableConfig
 from langfuse.langchain import CallbackHandler
@@ -33,13 +34,8 @@ def start_resume_generation(self, job_application_id: str):
     Given a workflow id, execute the workflow.
     """
     try:
-
-        async_to_sync(start_resume_generation_async)(
-            job_application_id=job_application_id,
-        )
-
+        asyncio.run(start_resume_generation_async(job_application_id))
         return {"job_application_id": job_application_id}
-
     except Exception as e:
         logger.error(f"Error starting resume generation: {str(e)}")
         raise e
@@ -79,6 +75,7 @@ async def start_resume_generation_async(
                 job_description=job_application_description,
                 company=job_application_company,
             )
+
             # Execute the workflow
             configurable = {
                 "thread_id": job_application_id,
@@ -92,17 +89,14 @@ async def start_resume_generation_async(
                 config=config,
             )
 
+            # Ensure all pending operations complete before closing
+            await asyncio.sleep(0.1)
+
             await conn.close()
 
     except psycopg.Error as db_error:
-        logger.error(
-            "Database error in start_resume_generation_async",
-            error=str(db_error),
-            exc_info=True,
-        )
+        logger.error(f"Database error in start_resume_generation_async {str(db_error)}")
         raise db_error
     except Exception as exec_error:
-        logger.error(
-            "Error in start_resume_generation_async", error=exec_error, exc_info=True
-        )
+        logger.error(f"Error in start_resume_generation_async {str(exec_error)}")
         raise exec_error

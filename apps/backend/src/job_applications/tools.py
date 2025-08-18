@@ -96,7 +96,7 @@ async def scraping_tool(url: str, data_to_extract: List[str]):
     except Exception as e:
         message = f"ERROR: failed to scrape content from the provided URL {str(e)}"
         logger.error(message)
-        raise Exception(message=message)
+        raise Exception(message) from e
 
 
 class ResearchDoneTool(BaseModel):

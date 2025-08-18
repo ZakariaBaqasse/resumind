@@ -16,35 +16,40 @@ class JobApplicationRepository:
 
     def create(self, job_application: JobApplication) -> JobApplication:
         """
-        Create a new user in the database.
+        Create a new job application in the database.
 
         Args:
-            user: The user object to be created
+            job_application: The job application object to be created
 
         Returns:
-            The created user with updated fields
+            The created job application with updated fields
         """
         self.session.add(job_application)
         self.session.commit()
         created_application = self.get_by_id(job_application.id)
         return created_application
 
-    def get_by_id(self, job_application_id: str) -> Optional[JobApplication]:
+    def get_by_id(
+        self, job_application_id: str, *, refresh: bool = False
+    ) -> Optional[JobApplication]:
         """
-        Retrieve a user by their ID.
+        Retrieve a job application by its ID.
 
         Args:
-            user_id: The ID of the user to retrieve
+            job_application_id: The ID of the application to retrieve
+            refresh: If True, refresh the object from the database to get the latest state.
 
         Returns:
-            The user if found, None otherwise
+            The job application if found, None otherwise
         """
-        self.session.expire_all()
         statement = select(JobApplication).where(
             JobApplication.id == job_application_id
         )
         results = self.session.exec(statement)
-        return results.first()
+        job_app = results.first()
+        if job_app and refresh:
+            self.session.refresh(job_app)
+        return job_app
 
     def get_all(self) -> List[JobApplication]:
         """
@@ -69,8 +74,8 @@ class JobApplicationRepository:
         """
         self.session.add(job_application)
         self.session.commit()
-        updated_user = self.get_by_id(job_application.id)
-        return updated_user
+        updated_application = self.get_by_id(job_application.id)
+        return updated_application
 
     def delete(self, job_application_id: str) -> bool:
         """
@@ -82,7 +87,7 @@ class JobApplicationRepository:
         Returns:
             True if the user was deleted, False otherwise
         """
-        job_application = self.get_by_id(job_application)
+        job_application = self.get_by_id(job_application_id)
         if job_application:
             self.session.delete(job_application)
             self.session.commit()

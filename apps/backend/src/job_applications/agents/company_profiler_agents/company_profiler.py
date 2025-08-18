@@ -1,4 +1,5 @@
 import logging
+import operator
 from typing import Optional, Dict, Any, Annotated, List
 from datetime import date
 from langchain_mistralai import ChatMistralAI
@@ -57,16 +58,17 @@ class CompanyProfilerState(BaseModel):
     company_discovery_results: Annotated[
         Optional[DiscoveredCompanyProfile], last_value_reducer
     ] = None
+    failed_research_categories: Annotated[List[str], operator.add] = []
 
 
 class CompanyProfilerAgent:
     def __init__(
         self,
-        model=ChatMistralAI(model=MODEL_NAME, max_tokens=1024),
+        model: Optional[ChatMistralAI] = None,
         debug: bool = False,
         rate_limiter=None,
     ) -> None:
-        self.model = model
+        self.model = model or ChatMistralAI(model=MODEL_NAME, max_tokens=1024)
         self.debug = debug
         self.rate_limiter = rate_limiter or RateLimiter(1.0)
 
@@ -137,6 +139,19 @@ class CompanyProfilerAgent:
                 job_application_service.update_company_profile_research_plan(
                     state.job_application_id, response
                 )
+                event_service = ServiceRegistry.get_events_service(session)
+                event_service.emit_pipeline_step(
+                    job_application_id=state.job_application_id,
+                    step=PipelineStep.RESEARCH_PLANNING,
+                    status=EventStatus.SUCCEEDED,
+                    message="Generated research plan",
+                )
+                event_service.emit_pipeline_step(
+                    job_application_id=state.job_application_id,
+                    step=PipelineStep.RESEARCH,
+                    status=EventStatus.STARTED,
+                    message="Starting research execution",
+                )
             logger.debug("RESPONSE FROM RESEARCH_PLANNER: ", response=response)
             sends = [
                 Send(
@@ -162,6 +177,13 @@ class CompanyProfilerAgent:
                 job_application_service.update_job_application_status(
                     state.job_application_id, ResumeGenerationStatus.FAILED
                 )
+                event_service.emit_pipeline_step(
+                    job_application_id=state.job_application_id,
+                    step=PipelineStep.RESEARCH_PLANNING,
+                    status=EventStatus.FAILED,
+                    message="Research planning failed",
+                    error={"message": str(e)},
+                )
                 event_service.emit_pipeline_failed(
                     job_application_id=state.job_application_id,
                     message="Research planning failed",
@@ -172,14 +194,18 @@ class CompanyProfilerAgent:
 
     def finalize_research(self, state: CompanyProfilerState, config: RunnableConfig):
         try:
+            total_categories = (
+                len(state.research_plan.research_categories)
+                if state.research_plan and state.research_plan.research_categories
+                else 0
+            )
+            failed_categories = len(state.failed_research_categories or [])
+            if total_categories > 0 and failed_categories >= total_categories:
+                # Halt graph execution and mark step as failed via the except block below
+                raise Exception("All research categories have failed.")
+
             with get_session_context() as session:
-                job_application_service = ServiceRegistry.get_job_application_service(
-                    session
-                )
                 event_service = ServiceRegistry.get_events_service(session)
-                job_application_service.update_company_profile_research_results(
-                    state.job_application_id, state.research_results
-                )
                 event_service.emit_pipeline_step(
                     job_application_id=state.job_application_id,
                     step=PipelineStep.RESEARCH,
@@ -196,6 +222,15 @@ class CompanyProfilerAgent:
                 job_application_service.update_job_application_status(
                     state.job_application_id, ResumeGenerationStatus.FAILED
                 )
+
+                event_service.emit_pipeline_step(
+                    job_application_id=state.job_application_id,
+                    step=PipelineStep.RESEARCH,
+                    status=EventStatus.FAILED,
+                    message="Research failed",
+                    error={"message": str(e)},
+                )
+
                 event_service.emit_pipeline_failed(
                     job_application_id=state.job_application_id,
                     message="Finalizing research failed",

@@ -206,11 +206,24 @@ class CompanyProfilerAgent:
 
             with get_session_context() as session:
                 event_service = ServiceRegistry.get_events_service(session)
+                job_application_service = ServiceRegistry.get_job_application_service(
+                    session
+                )
                 event_service.emit_pipeline_step(
                     job_application_id=state.job_application_id,
                     step=PipelineStep.RESEARCH,
                     status=EventStatus.SUCCEEDED,
                     message="Research completed",
+                )
+                job_application_service.update_job_application_status(
+                    state.job_application_id,
+                    ResumeGenerationStatus.PROCESSING_RESUME_GENERATION,
+                )
+                event_service.emit_pipeline_step(
+                    job_application_id=state.job_application_id,
+                    step=PipelineStep.RESUME_GENERATION,
+                    status=EventStatus.STARTED,
+                    message="Starting the resume generation process",
                 )
             return state
         except Exception as e:

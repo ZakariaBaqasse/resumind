@@ -39,9 +39,7 @@ class JobApplicationBase(SQLModel):
     # Relationships (back_populates)
     user_id: str = Field(foreign_key="auth.user.id", ondelete="CASCADE")
     # Use string reference for User to avoid circular dependency
-    resume_generation_status: Optional[ResumeGenerationStatus] = Field(
-        default=None, sa_column=Column(SQLAlchemyEnum(ResumeGenerationStatus))
-    )
+    resume_generation_status: Optional[str]
 
 
 class JobApplication(JobApplicationBase, table=True):

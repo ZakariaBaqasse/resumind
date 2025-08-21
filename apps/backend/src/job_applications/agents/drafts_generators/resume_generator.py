@@ -87,7 +87,10 @@ class ResumeGeneratorAgent:
                     step=PipelineStep.RESUME_DRAFTING,
                     status=EventStatus.STARTED,
                     message="Drafting an enhanced version of the resume",
-                    data={"iteration": state.current_evaluation},
+                    data={
+                        "iteration": state.current_evaluation,
+                        "max_iterations": state.max_evaluations,
+                    },
                 )
 
             messages = [SystemMessage(content=resume_generator_system_prompt)]
@@ -127,7 +130,10 @@ class ResumeGeneratorAgent:
                     step=PipelineStep.RESUME_DRAFTING,
                     status=EventStatus.SUCCEEDED,
                     message=f"Generated an enhanced version of the resume",
-                    data={"iteration": state.current_evaluation},
+                    data={
+                        "iteration": state.current_evaluation,
+                        "max_iterations": state.max_evaluations,
+                    },
                 )
 
             logger.debug("RESPONSE FROM RESUME GENERATOR: ", response=response)
@@ -167,7 +173,10 @@ class ResumeGeneratorAgent:
                     step=PipelineStep.RESUME_EVALUATION,
                     status=EventStatus.STARTED,
                     message="Evaluating the generated version of the resume",
-                    data={"iteration": state.current_evaluation},
+                    data={
+                        "iteration": state.current_evaluation,
+                        "max_iterations": state.max_evaluations,
+                    },
                 )
 
             messages = [SystemMessage(content=resume_evaluator_system_prompt)]
@@ -213,6 +222,7 @@ class ResumeGeneratorAgent:
                         "iteration": state.current_evaluation,
                         "evaluation_summary": response.summary,
                         "evaluation_grade": response.grade,
+                        "max_iterations": state.max_evaluations,
                     },
                 )
             if response.grade < state.evaluation_grade_threshold:

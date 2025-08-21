@@ -57,7 +57,7 @@ def start_application_resume_generation(
         resume_generation_job = start_resume_generation.delay(
             job_application_id=job_application.id
         )
-        job_application.resume_generation_status = ResumeGenerationStatus.STARTED
+        job_application.resume_generation_status = ResumeGenerationStatus.STARTED.value
         job_application.background_task_id = resume_generation_job.id
         updated_application = job_application_service.update_job_application(
             job_application
@@ -134,9 +134,7 @@ async def application_snapshot_sse(
             "job_description": app.job_description,
             "background_task_id": app.background_task_id,
             "resume_generation_status": (
-                app.resume_generation_status.value
-                if app.resume_generation_status
-                else None
+                app.resume_generation_status if app.resume_generation_status else None
             ),
             "company_profile": app.company_profile,
             "generated_resume": app.generated_resume,
@@ -187,8 +185,8 @@ async def application_snapshot_sse(
 
                 # Handle terminal states
                 if current_status in [
-                    ResumeGenerationStatus.FAILED,
-                    ResumeGenerationStatus.COMPLETED,
+                    ResumeGenerationStatus.FAILED.value,
+                    ResumeGenerationStatus.COMPLETED.value,
                 ]:
                     # Send completion event and close after a delay
                     completion_payload = {

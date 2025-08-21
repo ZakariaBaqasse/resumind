@@ -56,9 +56,11 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
 
     switch (snapshot.resume_generation_status) {
       case "processing_company_profile":
-        return "company-research"
+        return "Company Research"
       case "processing_resume_generation":
-        return "resume-generation"
+        return "Resume Generation"
+      case "processing_cover_letter":
+        return "Cover Letter Generation"
       case "completed":
         return "completed"
       case "failed":

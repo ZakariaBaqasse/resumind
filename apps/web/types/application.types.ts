@@ -1,3 +1,5 @@
+import { Resume } from "./resume.types"
+
 export type EventStatus = "started" | "succeeded" | "failed"
 export type EventName =
   | "pipeline.update"
@@ -12,8 +14,11 @@ export type PipelineStep =
   | "resume_generation"
   | "company_discovery"
   | "research"
-  | "resume_draft"
-  | "cover_letter"
+  | "resume_drafting"
+  | "resume_evaluation"
+  | "cover_letter_generation"
+  | "cover_letter_drafting"
+  | "cover_letter_evaluation"
 
 export type DiscoveredCompanyProfile = {
   company_name: string
@@ -26,8 +31,20 @@ export type DiscoveredCompanyProfile = {
     contact_page?: string | null
   } | null
   company_characteristics?: {
-    company_size_estimate: "startup" | "small" | "medium" | "large" | "enterprise" | "unknown"
-    company_type: "public" | "private" | "startup" | "nonprofit" | "government" | "unknown"
+    company_size_estimate:
+      | "startup"
+      | "small"
+      | "medium"
+      | "large"
+      | "enterprise"
+      | "unknown"
+    company_type:
+      | "public"
+      | "private"
+      | "startup"
+      | "nonprofit"
+      | "government"
+      | "unknown"
   } | null
   research_context?: {
     information_availability: "high" | "medium" | "low"
@@ -64,6 +81,7 @@ export type ResumeGenerationStatus =
   | "started"
   | "processing_company_profile"
   | "processing_resume_generation"
+  | "processing_cover_letter"
   | "completed"
   | "failed"
 
@@ -90,8 +108,8 @@ export type JobApplicationSnapshot = {
   background_task_id?: string | null
   resume_generation_status?: ResumeGenerationStatus | null
   company_profile?: CompanyProfile | null
-  generated_resume?: Record<string, unknown> | null
-  original_resume_snapshot?: Record<string, unknown> | null
+  generated_resume?: Resume
+  original_resume_snapshot?: Resume
   created_at?: string | null
   updated_at?: string | null
   events: ApplicationEvent[]

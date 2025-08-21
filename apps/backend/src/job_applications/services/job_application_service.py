@@ -191,7 +191,7 @@ class JobApplicationService:
             )
             if not job_application:
                 raise Exception("No job application found with the given ID")
-            job_application.resume_generation_status = status
+            job_application.resume_generation_status = status.value
             return self.update_job_application(job_application)
         except Exception as e:
             logger.error(
@@ -206,7 +206,7 @@ class JobApplicationService:
             )
             if not job_application:
                 raise Exception("No job application found with the given ID")
-            job_application.generated_resume = generated_resume
+            job_application.generated_resume = generated_resume.model_dump()
             return self.update_job_application(job_application)
         except Exception as e:
             logger.error(

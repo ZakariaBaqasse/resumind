@@ -70,7 +70,9 @@ async def start_resume_generation_async(
                 job_application_role = job_application.job_title
                 job_application_description = job_application.job_description
                 job_application_company = job_application.company_name
-                original_resume_snapshot = job_application.original_resume_snapshot
+                original_resume_snapshot = job_application.original_resume_snapshot[
+                    "resume"
+                ]
 
             input_state = MainGraphState(
                 job_application_id=job_application_id,

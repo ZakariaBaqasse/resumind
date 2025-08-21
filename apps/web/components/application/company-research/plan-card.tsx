@@ -10,6 +10,7 @@ import {
   Target,
 } from "lucide-react"
 
+import { ApplicationEvent } from "@/types/application.types"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -20,11 +21,15 @@ import {
 
 import { AnimatedCounter } from "../common"
 
+const EMPTY_EVENTS: ApplicationEvent[] = []
+
 export function PlanCard() {
   const companyProfile = useApplicationStore((state) =>
     state.getCompanyProfile()
   )
-  const events = useApplicationStore((state) => state.getEvents())
+  const events = useApplicationStore(
+    (state) => state.snapshot?.events || EMPTY_EVENTS
+  )
 
   const plan = companyProfile?.research_plan
 

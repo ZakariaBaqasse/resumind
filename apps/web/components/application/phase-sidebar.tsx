@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { useApplicationStore } from "@/store/job-application-store"
 import {
   AlertTriangle,
@@ -10,6 +10,8 @@ import {
   LetterText,
   Paperclip,
 } from "lucide-react"
+
+import { ApplicationEvent, EventStatus } from "@/types/application.types"
 
 type PhaseStatus = "completed" | "active" | "pending" | "failed"
 type Phase = {
@@ -32,44 +34,82 @@ function StatusIcon({ status }: { status: PhaseStatus }) {
   }
 }
 
+const EMPTY_EVENTS: ApplicationEvent[] = []
 export function PhaseSidebar({
   onChange,
   open,
+  activePhase,
   autoAdvance = true,
 }: {
   onChange: (id: string) => void
   open: boolean
+  activePhase: string
   autoAdvance?: boolean
 }) {
   // Use the store's computed selectors directly
-  const activePhase = useApplicationStore((state) => state.getCurrentPhase())
 
   // Get the raw data and compute phases locally with useMemo
   const snapshot = useApplicationStore((state) => state.snapshot)
+  const events = useApplicationStore(
+    (state) => state.snapshot?.events || EMPTY_EVENTS
+  )
 
   // Memoize the phases computation to prevent infinite loops
   const phases = useMemo(() => {
     if (!snapshot) return []
 
-    const hasDiscovery = !!snapshot.company_profile?.company_discovery_results
-    const plan = snapshot.company_profile?.research_plan
-    const results = snapshot.company_profile?.research_results || {}
+    const getPhaseStatus = (
+      phaseId: "company-research" | "resume-generation" | "cover-letter"
+    ): PhaseStatus => {
+      switch (phaseId) {
+        case "company-research": {
+          const hasFailed = events.some(
+            (event) =>
+              event.event_name === "pipeline.step" &&
+              event.step === "research" &&
+              event.status === "failed"
+          )
+          if (hasFailed) return "failed"
 
-    const completedCategories =
-      plan?.research_categories.filter(
-        (c) => (results as any)[c.category_name]
-      ) || []
+          if (
+            snapshot.resume_generation_status === "processing_company_profile"
+          ) {
+            return "active"
+          }
 
-    let companyResearchStatus: "completed" | "active" | "pending" | "failed" =
-      "pending"
-    if (
-      plan &&
-      completedCategories.length === (plan?.research_categories.length || 0) &&
-      plan?.research_categories.length
-    ) {
-      companyResearchStatus = "completed"
-    } else if (hasDiscovery || plan || completedCategories.length > 0) {
-      companyResearchStatus = "active"
+          if (
+            snapshot.resume_generation_status ===
+              "processing_resume_generation" ||
+            snapshot.generated_resume
+          ) {
+            return "completed"
+          }
+          return "pending"
+        }
+        case "resume-generation": {
+          const hasFailed = events.some(
+            (event) =>
+              event.event_name === "pipeline.step" &&
+              event.step === "resume" && // NOTE: This is an assumption
+              event.status === "failed"
+          )
+          if (hasFailed) return "failed"
+
+          if (
+            snapshot.resume_generation_status === "processing_resume_generation"
+          ) {
+            return "active"
+          }
+          if (snapshot.generated_resume) {
+            return "completed"
+          }
+          return "pending"
+        }
+        case "cover-letter":
+          return "pending"
+        default:
+          return "pending"
+      }
     }
 
     return [
@@ -77,28 +117,51 @@ export function PhaseSidebar({
         id: "company-research",
         name: "Company Research",
         icon: <Building2 className="h-4 w-4" />,
-        status: companyResearchStatus,
+        status: getPhaseStatus("company-research"),
       },
       {
         id: "resume-generation",
         name: "Resume Generation",
         icon: <Paperclip className="h-4 w-4" />,
-        status: snapshot.generated_resume ? "completed" : "pending",
+        status: getPhaseStatus("resume-generation"),
       },
       {
         id: "cover-letter",
         name: "Cover Letter Generation",
         icon: <LetterText className="h-4 w-4" />,
-        status: "pending",
+        status: getPhaseStatus("cover-letter"),
       },
     ] as Phase[]
-  }, [
-    snapshot?.id,
-    snapshot?.company_profile?.company_discovery_results,
-    snapshot?.company_profile?.research_plan,
-    snapshot?.company_profile?.research_results,
-    snapshot?.generated_resume,
-  ])
+  }, [snapshot, events])
+
+  const prevPhasesRef = useRef<Phase[]>()
+
+  useEffect(() => {
+    if (!autoAdvance || !prevPhasesRef.current) {
+      prevPhasesRef.current = phases
+      return
+    }
+
+    const prevPhases = prevPhasesRef.current
+
+    const completedPhaseIndex = phases.findIndex((phase) => {
+      const prevPhase = prevPhases.find((p) => p.id === phase.id)
+      return prevPhase?.status === "active" && phase.status === "completed"
+    })
+
+    if (completedPhaseIndex !== -1) {
+      const nextPhaseIndex = completedPhaseIndex + 1
+      if (nextPhaseIndex < phases.length) {
+        const nextPhase = phases[nextPhaseIndex]
+        // 1s delay to allow user to see the completed status before navigating
+        setTimeout(() => {
+          onChange(nextPhase.id)
+        }, 1000)
+      }
+    }
+
+    prevPhasesRef.current = phases
+  }, [phases, autoAdvance, onChange])
 
   return (
     <div
@@ -114,6 +177,7 @@ export function PhaseSidebar({
           {phases.map((phase, i) => (
             <div key={phase.id}>
               <button
+                disabled={phase.status === "pending"}
                 onClick={() => onChange(phase.id)}
                 className={`w-full text-left p-4 rounded-xl transition-all duration-200 ${
                   activePhase === phase.id

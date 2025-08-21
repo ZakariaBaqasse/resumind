@@ -32,13 +32,17 @@ import {
 import AnimatedEvent from "../animated-events"
 import { AnimatedCounter } from "../common"
 
+const EMPTY_EVENTS: ApplicationEvent[] = []
+
 export function DiscoveryCard() {
   // Count actual key links from the discovery data
   const companyProfile = useApplicationStore((state) =>
     state.getCompanyProfile()
   )
   const discovery = companyProfile?.company_discovery_results
-  const events = useApplicationStore((state) => state.getEvents())
+  const events = useApplicationStore(
+    (state) => state.snapshot?.events || EMPTY_EVENTS
+  )
   const keyLinksCount = Object.keys(discovery?.key_properties || {}).filter(
     (key) =>
       discovery?.key_properties?.[key as keyof typeof discovery.key_properties]

@@ -2,6 +2,7 @@ from logging import getLogger
 from typing import List, Optional, Dict
 from sqlalchemy.orm.attributes import flag_modified
 
+from src.core.types import Resume
 from src.job_applications.model import JobApplication
 from src.job_applications.repositories.job_application_repository import (
     JobApplicationRepository,
@@ -190,10 +191,42 @@ class JobApplicationService:
             )
             if not job_application:
                 raise Exception("No job application found with the given ID")
-            job_application.resume_generation_status = status
+            job_application.resume_generation_status = status.value
             return self.update_job_application(job_application)
         except Exception as e:
             logger.error(
                 f"ERROR: in JobApplicationService in update_job_application_status: {str(e)}"
+            )
+            raise e
+
+    def save_generated_resume(self, job_application_id: str, generated_resume: Resume):
+        try:
+            job_application = self.job_application_repository.get_by_id(
+                job_application_id
+            )
+            if not job_application:
+                raise Exception("No job application found with the given ID")
+            job_application.generated_resume = generated_resume.model_dump()
+            return self.update_job_application(job_application)
+        except Exception as e:
+            logger.error(
+                f"ERROR: in JobApplicationService in save_generated_resume: {str(e)}"
+            )
+            raise e
+
+    def save_generated_cover_letter(
+        self, job_application_id: str, generated_cover_letter: str
+    ):
+        try:
+            job_application = self.job_application_repository.get_by_id(
+                job_application_id
+            )
+            if not job_application:
+                raise Exception("No job application found with the given ID")
+            job_application.generated_cover_letter = generated_cover_letter
+            return self.update_job_application(job_application)
+        except Exception as e:
+            logger.error(
+                f"ERROR: in JobApplicationService in save_generated_cover_letter: {str(e)}"
             )
             raise e

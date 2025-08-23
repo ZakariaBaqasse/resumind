@@ -8,17 +8,12 @@ import { Button } from "@/components/ui/button"
 export function ApplicationHeader({
   onToggleSidebar,
   sidebarOpen,
-  onToggleActivity,
 }: {
   onToggleSidebar: () => void
   sidebarOpen: boolean
-  onToggleActivity: () => void
 }) {
   const snapshot = useApplicationStore((state) => state.snapshot)
-  const isConnected = useApplicationStore((state) => state.isConnected)
-  const currentStep = useApplicationStore((state) =>
-    state.getCurrentStepLabel()
-  )
+  const currentStep = useApplicationStore((state) => state.getCurrentPhase())
   return (
     <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 px-6 py-4 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto">
@@ -54,17 +49,8 @@ export function ApplicationHeader({
           </h2>
           <div className="flex items-center gap-2 mt-3">
             <div className="flex items-center gap-2 text-lg font-bold text-gray-800">
-              <span>Company Research</span>
               <span className="text-blue-600">{currentStep || ""}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggleActivity}
-              className="ml-2 hover:bg-blue-50 p-2"
-            >
-              Activity
-            </Button>
           </div>
         </div>
       </div>

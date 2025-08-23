@@ -58,7 +58,7 @@ class ResearchExecutor:
         debug: bool = False,
         rate_limiter=None,
     ) -> None:
-        self.model = model or ChatMistralAI(model=MODEL_NAME)
+        self.model = model or ChatMistralAI(model=MODEL_NAME, max_tokens=8192)
         self.debug = debug
         self.rate_limiter = rate_limiter or RateLimiter(1.0)
 

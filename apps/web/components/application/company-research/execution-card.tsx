@@ -13,6 +13,7 @@ import {
   Loader2,
 } from "lucide-react"
 
+import { ApplicationEvent } from "@/types/application.types"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,6 +24,8 @@ import {
 } from "@/components/ui/collapsible"
 
 import { AnimatedCounter } from "../common"
+
+const EMPTY_EVENTS: ApplicationEvent[] = []
 
 export function ExecutionCard() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
@@ -35,7 +38,9 @@ export function ExecutionCard() {
   const results = useApplicationStore(
     (state) => state.getCompanyProfile()?.research_results
   )
-  const events = useApplicationStore((state) => state.getEvents())
+  const events = useApplicationStore(
+    (state) => state.snapshot?.events || EMPTY_EVENTS
+  )
 
   const total = plan?.research_categories.length || 0
 

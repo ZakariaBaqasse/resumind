@@ -10,6 +10,7 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langchain_core.runnables import RunnableConfig
 from langfuse.langchain import CallbackHandler
 
+from src.core.rate_limit_handlers import RateLimiter
 from src.core.service_registry import ServiceRegistry
 from src.configs.database_config import get_session_context
 from src.job_applications.agents.company_profiler_agents.company_profiler import (
@@ -17,6 +18,7 @@ from src.job_applications.agents.company_profiler_agents.company_profiler import
     CompanyProfilerState,
 )
 from src.celery_app import app
+from src.job_applications.agents.main_graph import MainGraphAgent, MainGraphState
 
 # Initialize structured logger
 logger = logging.getLogger(__name__)
@@ -56,7 +58,7 @@ async def start_resume_generation_async(
             await checkpointer.setup()
 
             # Build the execution graph with the async checkpointer
-            executor = CompanyProfilerAgent()
+            executor = MainGraphAgent(rate_limiter=RateLimiter())
             graph = executor.build_graph(checkpointer)
             with get_session_context() as session:
                 job_application_service = ServiceRegistry.get_job_application_service(
@@ -68,12 +70,16 @@ async def start_resume_generation_async(
                 job_application_role = job_application.job_title
                 job_application_description = job_application.job_description
                 job_application_company = job_application.company_name
+                original_resume_snapshot = job_application.original_resume_snapshot[
+                    "resume"
+                ]
 
-            input_state = CompanyProfilerState(
+            input_state = MainGraphState(
                 job_application_id=job_application_id,
                 job_role=job_application_role,
                 job_description=job_application_description,
                 company=job_application_company,
+                original_resume_snapshot=original_resume_snapshot,
             )
 
             # Execute the workflow

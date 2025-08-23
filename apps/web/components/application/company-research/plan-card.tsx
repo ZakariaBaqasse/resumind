@@ -6,10 +6,12 @@ import {
   AlertTriangle,
   CheckCircle,
   History,
+  Loader2,
   Search,
   Target,
 } from "lucide-react"
 
+import { ApplicationEvent } from "@/types/application.types"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -20,11 +22,15 @@ import {
 
 import { AnimatedCounter } from "../common"
 
+const EMPTY_EVENTS: ApplicationEvent[] = []
+
 export function PlanCard() {
   const companyProfile = useApplicationStore((state) =>
     state.getCompanyProfile()
   )
-  const events = useApplicationStore((state) => state.getEvents())
+  const events = useApplicationStore(
+    (state) => state.snapshot?.events || EMPTY_EVENTS
+  )
 
   const plan = companyProfile?.research_plan
 
@@ -59,7 +65,7 @@ export function PlanCard() {
       case "started":
         return (
           <Badge className="bg-blue-50 text-blue-700 border-blue-200 px-3 py-1 hover:bg-blue-100 transition-colors">
-            <Target className="w-3 h-3 mr-1 animate-pulse" /> In Progress
+            <Loader2 className="w-3 h-3 mr-1 animate-spin" /> In Progress
           </Badge>
         )
       case "pending":

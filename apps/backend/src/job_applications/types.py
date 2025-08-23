@@ -8,6 +8,7 @@ class ResumeGenerationStatus(Enum):
     STARTED = "started"
     PROCESSING_COMPANY_PROFILE = "processing_company_profile"
     PROCESSING_RESUME_GENERATION = "processing_resume_generation"
+    PROCESSING_COVER_LETTER = "processing_cover_letter"
     COMPLETED = "completed"
     FAILED = "failed"
 
@@ -33,8 +34,11 @@ class PipelineStep(str, Enum):
     COMPANY_DISCOVERY = "company_discovery"
     RESEARCH_PLANNING = "research_planning"
     RESEARCH = "research"
-    RESUME_DRAFT = "resume_draft"
-    COVER_LETTER = "cover_letter"
+    RESUME_DRAFTING = "resume_drafting"
+    RESUME_EVALUATION = "resume_evaluation"
+    COVER_LETTER_GENERATION = "cover_letter_generation"
+    COVER_LETTER_DRAFTING = "cover_letter_drafting"
+    COVER_LETTER_EVALUATION = "cover_letter_evaluation"
 
 
 class ResearchCategory(BaseModel):
@@ -196,3 +200,57 @@ class CreateJobApplicationRequest(BaseModel):
     job_role: str
     job_description: str
     company: str
+
+
+class GeneratedResumeEvaluation(BaseModel):
+    grade: int = Field(
+        ...,
+        description=(
+            "A numerical score (0-100) representing the overall quality of the generated resume. "
+            "Higher values indicate a better match to the job requirements and resume best practices."
+        ),
+    )
+    changes: Dict[str, str] = Field(
+        ...,
+        description=(
+            "A dictionary mapping each resume field (e.g., 'summary', 'experience', 'skills') to a suggested enhancement. "
+            "The key is the field name, and the value is a detailed recommendation or edit to improve that section."
+        ),
+    )
+    summary: str = Field(
+        ...,
+        description=(
+            "A comprehensive narrative summarizing the evaluation of the resume, including strengths, weaknesses, "
+            "and overall fit for the target job. This should provide actionable feedback and context for the assigned grade."
+        ),
+    )
+
+
+class GeneratedCoverLetterEvaluation(BaseModel):
+    grade: int = Field(
+        ...,
+        description=(
+            "A numerical score (0-100) representing the overall quality of the generated cover letter. "
+            "Higher values indicate a better match to the job requirements and cover letter best practices."
+        ),
+    )
+    changes: List[str] = Field(
+        ...,
+        description=(
+            "A list of suggested improvements or edits to the cover letter. "
+            "Each item should be a detailed recommendation to enhance the content, structure, or alignment with the job requirements."
+        ),
+    )
+    summary: str = Field(
+        ...,
+        description=(
+            "A comprehensive narrative summarizing the evaluation of the cover letter, including strengths, weaknesses, "
+            "and overall fit for the target job. This should provide actionable feedback and context for the assigned grade."
+        ),
+    )
+
+
+class CoverLetterResponse(BaseModel):
+    content: str = Field(
+        ..., description="The full text content of the generated cover letter."
+    )

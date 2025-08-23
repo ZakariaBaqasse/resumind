@@ -6,13 +6,14 @@ import { useApplicationStore } from "@/store/job-application-store"
 
 import { ActivitySidebar } from "./activity-sidebar"
 import CompanyResearchTab from "./company-research"
+import CoverLetterGenerationTab from "./documents-generation/cover-letter-tab"
+import ResumeGenerationTab from "./documents-generation/resume-tab"
 import { ApplicationHeader } from "./header"
 import { PhaseSidebar } from "./phase-sidebar"
 
 export default function ApplicationStatus() {
   const [activePhase, setActivePhase] = useState("company-research")
   const [sidebarOpen, setSidebarOpen] = useState(true)
-  const [activitySidebarOpen, setActivitySidebarOpen] = useState(false)
 
   // Get data from Zustand store using selectors
   const snapshot = useApplicationStore((state) => state.snapshot)
@@ -26,11 +27,11 @@ export default function ApplicationStatus() {
       <ApplicationHeader
         onToggleSidebar={() => setSidebarOpen((v) => !v)}
         sidebarOpen={sidebarOpen}
-        onToggleActivity={() => setActivitySidebarOpen(true)}
       />
 
       <div className="flex max-w-7xl mx-auto">
         <PhaseSidebar
+          activePhase={activePhase}
           onChange={(id) => setActivePhase(id)}
           open={sidebarOpen}
         />
@@ -38,15 +39,10 @@ export default function ApplicationStatus() {
         <div className="flex-1 p-8 overflow-auto">
           {activePhase === "company-research" && <CompanyResearchTab />}
 
-          {/* ... rest of the phases remain the same ... */}
-        </div>
+          {activePhase === "resume-generation" && <ResumeGenerationTab />}
 
-        {activitySidebarOpen && (
-          <ActivitySidebar
-            events={snapshot.events}
-            onClose={() => setActivitySidebarOpen(false)}
-          />
-        )}
+          {activePhase === "cover-letter" && <CoverLetterGenerationTab />}
+        </div>
       </div>
     </div>
   )

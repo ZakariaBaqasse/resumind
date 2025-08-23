@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 
 import { ApplicationEvent, EventStatus } from "@/types/application.types"
+import { cn } from "@/lib/utils"
 
 type PhaseStatus = "completed" | "active" | "pending" | "failed"
 type Phase = {
@@ -90,7 +91,7 @@ export function PhaseSidebar({
           const hasFailed = events.some(
             (event) =>
               event.event_name === "pipeline.step" &&
-              event.step === "resume" && // NOTE: This is an assumption
+              event.step?.includes("resume") &&
               event.status === "failed"
           )
           if (hasFailed) return "failed"
@@ -105,8 +106,23 @@ export function PhaseSidebar({
           }
           return "pending"
         }
-        case "cover-letter":
+        case "cover-letter": {
+          const hasFailed = events.some(
+            (event) =>
+              event.event_name === "pipeline.step" &&
+              event.step?.includes("cover_letter") &&
+              event.status === "failed"
+          )
+          if (hasFailed) return "failed"
+
+          if (snapshot.resume_generation_status === "processing_cover_letter") {
+            return "active"
+          }
+          if (snapshot.generated_resume) {
+            return "completed"
+          }
           return "pending"
+        }
         default:
           return "pending"
       }
@@ -179,11 +195,15 @@ export function PhaseSidebar({
               <button
                 disabled={phase.status === "pending"}
                 onClick={() => onChange(phase.id)}
-                className={`w-full text-left p-4 rounded-xl transition-all duration-200 ${
-                  activePhase === phase.id
-                    ? "bg-gradient-to-r from-blue-50 to-slate-50 border border-blue-200/50 shadow-sm"
-                    : "hover:bg-white/60"
-                }`}
+                className={cn(
+                  `w-full text-left p-4 rounded-xl transition-all duration-200`,
+                  {
+                    "bg-gradient-to-r from-blue-50 to-slate-50 border border-blue-200/50 shadow-sm":
+                      activePhase === phase.id,
+                    "hover:bg-white/60": activePhase !== phase.id,
+                    "text-gray-400": phase.status === "pending",
+                  }
+                )}
               >
                 <div className="flex items-center gap-3">
                   <StatusIcon status={phase.status} />

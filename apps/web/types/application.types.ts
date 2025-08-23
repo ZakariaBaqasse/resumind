@@ -11,9 +11,9 @@ export type EventName =
   | "pipeline.failed"
 
 export type PipelineStep =
-  | "resume_generation"
   | "company_discovery"
   | "research"
+  | "resume_generation"
   | "resume_drafting"
   | "resume_evaluation"
   | "cover_letter_generation"
@@ -110,6 +110,7 @@ export type JobApplicationSnapshot = {
   company_profile?: CompanyProfile | null
   generated_resume?: Resume
   original_resume_snapshot?: Resume
+  generated_cover_letter?: string
   created_at?: string | null
   updated_at?: string | null
   events: ApplicationEvent[]

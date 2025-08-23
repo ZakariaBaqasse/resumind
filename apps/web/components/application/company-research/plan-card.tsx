@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   CheckCircle,
   History,
+  Loader2,
   Search,
   Target,
 } from "lucide-react"
@@ -64,7 +65,7 @@ export function PlanCard() {
       case "started":
         return (
           <Badge className="bg-blue-50 text-blue-700 border-blue-200 px-3 py-1 hover:bg-blue-100 transition-colors">
-            <Target className="w-3 h-3 mr-1 animate-pulse" /> In Progress
+            <Loader2 className="w-3 h-3 mr-1 animate-spin" /> In Progress
           </Badge>
         )
       case "pending":

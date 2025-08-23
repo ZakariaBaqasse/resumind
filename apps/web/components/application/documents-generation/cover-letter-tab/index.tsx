@@ -6,46 +6,56 @@ import { ApplicationEvent } from "@/types/application.types"
 import DocumentPlaceholder from "../shared/document-placeholder"
 import GenerationHeader from "../shared/generation-header"
 import ResultsHeader from "../shared/results-header"
-import ResumeDisplay from "./resume-display"
+import CoverLetterDisplay from "./cover-letter-display"
 
 const EMPTY_EVENTS: ApplicationEvent[] = []
 
-export default function ResumeGenerationTab() {
+export default function CoverLetterGenerationTab() {
   const snapshot = useApplicationStore((state) => state.snapshot)
   const events = useApplicationStore(
     (state) => state.snapshot?.events || EMPTY_EVENTS
   )
 
   const latestEvaluatorEvent = events.findLast(
-    (e) => e.event_name === "pipeline.step" && e.step === "resume_evaluation"
+    (e) =>
+      e.event_name === "pipeline.step" && e.step === "cover_letter_evaluation"
   )
 
   const latestEvent = events.findLast(
     (e) =>
       e.event_name === "pipeline.step" &&
-      (e.step === "resume_evaluation" || e.step === "resume_drafting")
+      (e.step === "cover_letter_evaluation" ||
+        e.step === "cover_letter_drafting")
   )
 
   const currentIteration = (latestEvent?.data as any)?.iteration
 
-  const resumeGenerationEvent = events.findLast(
-    (e) => e.event_name === "pipeline.step" && e.step === "resume_generation"
+  const coverLetterGenerationEvent = events.findLast(
+    (e) =>
+      e.event_name === "pipeline.step" && e.step === "cover_letter_generation"
   )
 
-  const isGenerating = resumeGenerationEvent?.status === "started"
-  const isError = resumeGenerationEvent?.status === "failed"
-  const errorMessage = (resumeGenerationEvent?.error as any)?.message
+  const isGenerating = coverLetterGenerationEvent?.status === "started"
+  const isError = coverLetterGenerationEvent?.status === "failed"
+  const errorMessage = (coverLetterGenerationEvent?.error as any)?.message
 
-  if (snapshot?.generated_resume) {
+  console.log(snapshot)
+
+  if (snapshot?.generated_cover_letter && snapshot.generated_resume) {
     return (
       <div className="space-y-8">
         {/* Completed Header */}
         <ResultsHeader
           latestEvaluatorEvent={latestEvaluatorEvent!}
-          title="Resume Generation Complete"
+          title="Cover letter Generation Complete"
         />
         {/* Resume Display */}
-        <ResumeDisplay resume={snapshot.generated_resume} />
+        <CoverLetterDisplay
+          generatedResume={snapshot.generated_resume}
+          coverLetter={snapshot.generated_cover_letter}
+          company={snapshot.company_name}
+          jobTitle={snapshot.job_title}
+        />
       </div>
     )
   }
@@ -59,10 +69,10 @@ export default function ResumeGenerationTab() {
               <XCircle className="w-16 h-16 text-red-500" />
             </div>
             <h2 className="text-2xl font-bold text-gray-800">
-              Resume Generation Failed
+              Cover Letter Generation Failed
             </h2>
             <p className="text-gray-600">
-              An error occurred during the resume generation process.
+              An error occurred during the cover letter generation process.
             </p>
             {errorMessage && (
               <div className="p-4 bg-gray-100 border border-gray-200 rounded-md text-left">
@@ -84,11 +94,11 @@ export default function ResumeGenerationTab() {
         {/* Generation Header */}
         <GenerationHeader
           latestEvent={latestEvent!}
-          title="Resume Generation"
+          title="Cover Letter Generation"
           currentIteration={currentIteration}
         />
         {/* Resume Placeholder */}
-        <DocumentPlaceholder documentName="Resume" />
+        <DocumentPlaceholder documentName="Cover letter" />
       </div>
     )
   }
@@ -104,11 +114,11 @@ export default function ResumeGenerationTab() {
               <FileText className="w-6 h-6 text-gray-600" />
             </div>
             <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-              Resume Generation
+              Cover Letter Generation
             </h2>
           </div>
           <p className="text-gray-600 font-semibold text-lg">
-            Waiting for company research to complete...
+            Waiting for resume generation to complete...
           </p>
         </div>
       </div>
@@ -118,7 +128,7 @@ export default function ResumeGenerationTab() {
           <FileText className="w-20 h-20 text-gray-400 mx-auto" />
         </div>
         <p className="text-gray-500 font-semibold text-lg">
-          Resume generation will begin once research is complete
+          Cover letter generation will begin once the resume is complete
         </p>
       </div>
     </div>

@@ -22,6 +22,7 @@ class JobApplicationBase(SQLModel):
     generated_resume: Optional[Dict[str, Any]] = Field(
         default=None, alias="generatedResume", sa_column=Column(JSON)
     )
+    generated_cover_letter: Optional[str]
     original_resume_snapshot: Optional[Dict[str, Any]] = Field(
         default=None, alias="originalResumeSnapshot", sa_column=Column(JSON)
     )

@@ -9,6 +9,7 @@ import {
   CheckCircle,
   Globe,
   Info,
+  Loader2,
   Search,
 } from "lucide-react"
 
@@ -33,6 +34,13 @@ import AnimatedEvent from "../animated-events"
 import { AnimatedCounter } from "../common"
 
 const EMPTY_EVENTS: ApplicationEvent[] = []
+
+const formatURL = (url: string) => {
+  if (!url.startsWith("https://")) {
+    return "https://" + url
+  }
+  return url
+}
 
 export function DiscoveryCard() {
   // Count actual key links from the discovery data
@@ -74,7 +82,7 @@ export function DiscoveryCard() {
   }, [events])
 
   const hostname = discovery?.official_website
-    ? new URL(discovery.official_website).hostname
+    ? new URL(formatURL(discovery.official_website)).hostname
     : undefined
   const links = discovery?.key_properties || {}
 
@@ -89,7 +97,7 @@ export function DiscoveryCard() {
       case "started":
         return (
           <Badge className="bg-blue-50 text-blue-700 border-blue-200 px-3 py-1 hover:bg-blue-100 transition-colors">
-            <Search className="w-3 h-3 mr-1 animate-pulse" /> In Progress
+            <Loader2 className="w-3 h-3 mr-1 animate-spin" /> In Progress
           </Badge>
         )
       case "failed":

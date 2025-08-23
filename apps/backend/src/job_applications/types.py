@@ -224,3 +224,33 @@ class GeneratedResumeEvaluation(BaseModel):
             "and overall fit for the target job. This should provide actionable feedback and context for the assigned grade."
         ),
     )
+
+
+class GeneratedCoverLetterEvaluation(BaseModel):
+    grade: int = Field(
+        ...,
+        description=(
+            "A numerical score (0-100) representing the overall quality of the generated cover letter. "
+            "Higher values indicate a better match to the job requirements and cover letter best practices."
+        ),
+    )
+    changes: List[str] = Field(
+        ...,
+        description=(
+            "A list of suggested improvements or edits to the cover letter. "
+            "Each item should be a detailed recommendation to enhance the content, structure, or alignment with the job requirements."
+        ),
+    )
+    summary: str = Field(
+        ...,
+        description=(
+            "A comprehensive narrative summarizing the evaluation of the cover letter, including strengths, weaknesses, "
+            "and overall fit for the target job. This should provide actionable feedback and context for the assigned grade."
+        ),
+    )
+
+
+class CoverLetterResponse(BaseModel):
+    content: str = Field(
+        ..., description="The full text content of the generated cover letter."
+    )

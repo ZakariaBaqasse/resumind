@@ -139,6 +139,7 @@ async def application_snapshot_sse(
             "company_profile": app.company_profile,
             "generated_resume": app.generated_resume,
             "original_resume_snapshot": app.original_resume_snapshot,
+            "generated_cover_letter": app.generated_cover_letter,
             "created_at": app.created_at.isoformat() if app.created_at else None,
             "updated_at": app.updated_at.isoformat() if app.updated_at else None,
             "events": [_serialize_event(e) for e in evs],
@@ -192,7 +193,7 @@ async def application_snapshot_sse(
                     completion_payload = {
                         **payload,
                         "stream_ending": True,
-                        "final_status": current_status.value,
+                        "final_status": current_status,
                     }
                     yield _format_sse(f"completion-{event_id}", completion_payload)
 

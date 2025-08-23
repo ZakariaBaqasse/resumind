@@ -213,3 +213,20 @@ class JobApplicationService:
                 f"ERROR: in JobApplicationService in save_generated_resume: {str(e)}"
             )
             raise e
+
+    def save_generated_cover_letter(
+        self, job_application_id: str, generated_cover_letter: str
+    ):
+        try:
+            job_application = self.job_application_repository.get_by_id(
+                job_application_id
+            )
+            if not job_application:
+                raise Exception("No job application found with the given ID")
+            job_application.generated_cover_letter = generated_cover_letter
+            return self.update_job_application(job_application)
+        except Exception as e:
+            logger.error(
+                f"ERROR: in JobApplicationService in save_generated_cover_letter: {str(e)}"
+            )
+            raise e

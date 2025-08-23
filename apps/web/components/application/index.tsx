@@ -6,6 +6,7 @@ import { useApplicationStore } from "@/store/job-application-store"
 
 import { ActivitySidebar } from "./activity-sidebar"
 import CompanyResearchTab from "./company-research"
+import CoverLetterGenerationTab from "./documents-generation/cover-letter-tab"
 import ResumeGenerationTab from "./documents-generation/resume-tab"
 import { ApplicationHeader } from "./header"
 import { PhaseSidebar } from "./phase-sidebar"
@@ -38,8 +39,9 @@ export default function ApplicationStatus() {
         <div className="flex-1 p-8 overflow-auto">
           {activePhase === "company-research" && <CompanyResearchTab />}
 
-          {/* ... rest of the phases remain the same ... */}
           {activePhase === "resume-generation" && <ResumeGenerationTab />}
+
+          {activePhase === "cover-letter" && <CoverLetterGenerationTab />}
         </div>
       </div>
     </div>

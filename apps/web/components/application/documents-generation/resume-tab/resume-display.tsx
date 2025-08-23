@@ -213,9 +213,12 @@ const ResumeDocument = ({ resume }: { resume: Resume }) => (
               </View>
               <Text style={styles.entrySubtitle}>{job.company_name}</Text>
               <Text style={styles.entryResponsibilities}>
-                {(job.responsibilities || "").split("\n").map((item, key) => (
-                  <Text key={key}>• {item.trim()}\n</Text>
-                ))}
+                {(job.responsibilities || "")
+                  .trim()
+                  .split("\\n")
+                  .map((item, key) => (
+                    <Text key={key}>• {item.trim()}\n</Text>
+                  ))}
               </Text>
             </View>
           ))}

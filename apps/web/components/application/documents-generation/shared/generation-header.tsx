@@ -58,9 +58,6 @@ export default function GenerationHeader({
                       : "Evaluator"}{" "}
                     Agent
                   </span>
-                  <Badge variant="outline" className="text-xs">
-                    Iteration {currentIteration}
-                  </Badge>
                 </div>
                 <p className="text-gray-700 font-medium mb-3">
                   {latestEvent?.message}
@@ -83,7 +80,7 @@ export default function GenerationHeader({
                       </span>
                       <Badge
                         className={`${
-                          (latestEvent?.data as any).grade >= 70
+                          (latestEvent?.data as any).grade >= 90
                             ? "bg-green-100 text-green-700 border-green-200"
                             : "bg-orange-100 text-orange-700 border-orange-200"
                         }`}

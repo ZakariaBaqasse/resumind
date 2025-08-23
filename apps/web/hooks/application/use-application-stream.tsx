@@ -46,6 +46,9 @@ export function useApplicationStream(id: string) {
 
         const parsedData = JSON.parse(event.data)
         updateSnapshot(parsedData)
+        if (parsedData.resume_generation_status === "completed") {
+          eventSource.close()
+        }
       } catch (e) {
         setError(
           e instanceof Error ? e : new Error("Unknown error parsing data")

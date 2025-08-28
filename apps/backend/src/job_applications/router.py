@@ -2,23 +2,26 @@ import asyncio
 import json
 import os
 from logging import getLogger
-from datetime import datetime
-from typing import Optional, Dict, Any, Tuple
+from typing import List, Dict, Any
 
 from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
+    Query,
     Request,
 )
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
+from src.core.types import Resume
 from src.auth.dependencies import get_current_user
 from src.job_applications.dependencies import get_job_application_service
 from src.job_applications.services.job_application_service import JobApplicationService
 from src.user.model import User
 from src.job_applications.types import (
     CreateJobApplicationRequest,
+    JobApplicationPreview,
     ResumeGenerationStatus,
 )
 from src.job_applications.model import JobApplication
@@ -33,6 +36,12 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 job_application_router = APIRouter(prefix="/application", tags=["job application"])
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "../../uploads")
+
+
+class PaginatedJobApplicationsResponse(BaseModel):
+    items: List[JobApplicationPreview]
+    total: int
+    has_next: bool
 
 
 @job_application_router.post("/start-generation")
@@ -73,6 +82,68 @@ def start_application_resume_generation(
             f"ERROR in job_application router start_application_resume_generation {str(e)}"
         )
         return HTTPException(status_code=500, detail="Internal Server error")
+
+
+@job_application_router.get("/list", response_model=PaginatedJobApplicationsResponse)
+async def list_job_applications(
+    offset: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
+    user: User = Depends(get_current_user),
+    job_application_service: JobApplicationService = Depends(
+        get_job_application_service
+    ),
+):
+    """
+    Get a paginated list of job applications
+    """
+    try:
+        job_applications, total = job_application_service.list_paginated(
+            user.id, offset, limit
+        )
+        job_applications_previews = [
+            JobApplicationPreview(**job_application.model_dump())
+            for job_application in job_applications
+        ]
+        has_next = (offset + limit) < total
+        logger.debug("PAGINATED APPLICATIONS", job_applications_previews)
+        return PaginatedJobApplicationsResponse(
+            items=job_applications_previews, total=total, has_next=has_next
+        )
+    except Exception as e:
+        logger.error(f"Error listing job applications: {e}")
+        return PaginatedJobApplicationsResponse(items=[], total=0, has_next=False)
+
+
+@job_application_router.get("/search", response_model=PaginatedJobApplicationsResponse)
+async def search_job_applications(
+    search_term: str = Query(None, description="Search term"),
+    offset: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
+    user: User = Depends(get_current_user),
+    job_application_service: JobApplicationService = Depends(
+        get_job_application_service
+    ),
+):
+    """
+    Search for job applications with comprehensive filtering support
+    Supports filtering by:
+    - search_term: matches app name or description
+    """
+    try:
+        job_applications, total = job_application_service.search_job_applications(
+            search_term=search_term, offset=offset, limit=limit, user_id=user.id
+        )
+        job_applications_previews = [
+            JobApplicationPreview(**job_application.model_dump())
+            for job_application in job_applications
+        ]
+        has_next = (offset + limit) < total
+        return PaginatedJobApplicationsResponse(
+            items=job_applications_previews, total=total, has_next=has_next
+        )
+    except Exception as e:
+        logger.error(f"Error searching job applications: {e}")
+        return PaginatedJobApplicationsResponse(items=[], total=0, has_next=False)
 
 
 @job_application_router.get("/{application_id}/stream/{token}")
@@ -225,3 +296,122 @@ async def application_snapshot_sse(
     return StreamingResponse(
         event_generator(), media_type="text/event-stream", headers=headers
     )
+
+
+class UpdateResumeRequest(BaseModel):
+    resume: Resume
+
+
+@job_application_router.put("/{application_id}/resume")
+async def update_generated_resume(
+    application_id: str,
+    request: UpdateResumeRequest,
+    current_user: User = Depends(get_current_user),
+    job_application_service: JobApplicationService = Depends(
+        get_job_application_service
+    ),
+):
+    try:
+        job_application = job_application_service.get_user_job_application(
+            application_id, current_user.id, refresh=True
+        )
+        if not job_application:
+            return HTTPException(
+                status_code=404, detail="No job application found for the given user"
+            )
+        if not job_application.generated_resume:
+            return HTTPException(
+                status_code=400,
+                detail="Cannot update job application resume because it isn't generated yet",
+            )
+        updated_job_application = job_application_service.save_generated_resume(
+            application_id, request.resume
+        )
+        return updated_job_application
+    except Exception as e:
+        logger.error(
+            f"ERROR in job_application router update_generated_resume {str(e)}"
+        )
+        return HTTPException(status_code=500, detail="Internal Server error")
+
+
+class UpdateCoverLetterRequest(BaseModel):
+    cover_letter_content: str
+
+
+@job_application_router.put("/{application_id}/cover-letter")
+async def update_generated_cover_letter(
+    application_id: str,
+    cover_letter: UpdateCoverLetterRequest,
+    current_user: User = Depends(get_current_user),
+    job_application_service: JobApplicationService = Depends(
+        get_job_application_service
+    ),
+):
+    try:
+        job_application = job_application_service.get_user_job_application(
+            application_id, current_user.id, refresh=True
+        )
+        if not job_application:
+            return HTTPException(
+                status_code=404, detail="No job application found for the given user"
+            )
+        if not job_application.generated_cover_letter:
+            return HTTPException(
+                status_code=400,
+                detail="Cannot update job application cover letter because it isn't generated yet",
+            )
+        updated_job_application = job_application_service.save_generated_cover_letter(
+            application_id, cover_letter.cover_letter_content
+        )
+        return updated_job_application
+    except Exception as e:
+        logger.error(
+            f"ERROR in job_application router update_generated_cover_letter {str(e)}"
+        )
+        return HTTPException(status_code=500, detail="Internal Server error")
+
+
+@job_application_router.delete("/{application_id}")
+async def delete_job_application(
+    application_id: str,
+    current_user: User = Depends(get_current_user),
+    job_application_service: JobApplicationService = Depends(
+        get_job_application_service
+    ),
+):
+    try:
+        job_application = job_application_service.get_user_job_application(
+            application_id, current_user.id, refresh=True
+        )
+        if not job_application:
+            return HTTPException(
+                status_code=404, detail="No job application found for the given user"
+            )
+
+        return job_application_service.delete_job_application(application_id)
+    except Exception as e:
+        logger.error(f"ERROR in job_application router delete_job_application {str(e)}")
+        return HTTPException(status_code=500, detail="Internal Server error")
+
+
+@job_application_router.get("/{application_id}")
+async def get_job_application(
+    application_id: str,
+    current_user: User = Depends(get_current_user),
+    job_application_service: JobApplicationService = Depends(
+        get_job_application_service
+    ),
+):
+    try:
+        job_application = job_application_service.get_user_job_application(
+            application_id, current_user.id, refresh=True
+        )
+        if not job_application:
+            return HTTPException(
+                status_code=404, detail="No job application found for the given user"
+            )
+        return job_application
+    except Exception as e:
+        logger.error(f"ERROR in job_application router get_job_application {str(e)}")
+        return HTTPException(status_code=500, detail="Internal Server error")

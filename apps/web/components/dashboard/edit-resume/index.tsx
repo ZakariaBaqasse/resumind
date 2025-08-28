@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ResumeFormType } from "@/schema/resume.schema"
+import { ArrowLeft } from "lucide-react"
 
 import { useGetUser } from "@/hooks/dashboard/use-get-user"
 import { useSaveResume } from "@/hooks/onboarding/use-save-resume"
+import { Button } from "@/components/ui/button"
 import ResumeEditForm from "@/components/resume-form"
 
 import EditResumeLoadingSkeleton from "./loading-skeleton"
@@ -60,7 +62,6 @@ export default function EditResumeForm() {
 
   const handleSubmit = async (data: ResumeFormType) => {
     try {
-      // TODO: Implement save functionality
       console.log("Saving resume:", data)
       await trigger({ resume: data })
       setSaveSuccess(true)
@@ -76,16 +77,25 @@ export default function EditResumeForm() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.back()}
-              className="text-gray-600 hover:text-gray-900"
+        <div className="max-w-6xl mx-auto flex items-center h-16">
+          {/* Left: Back Button */}
+          <div className="flex-1 flex items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/dashboard")}
             >
-              ← Back
-            </button>
-            <h1 className="text-xl font-semibold text-gray-900">Edit Resume</h1>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
           </div>
+          {/* Center: Title and Icon */}
+
+          <div className="flex gap-2 flex-col items-center">
+            <h2 className="text-xl font-bold text-gray-900">Edit resume</h2>
+          </div>
+          {/* Right: Empty for spacing (or add actions/settings here) */}
+          <div className="flex-1" />
         </div>
       </div>
 

@@ -1,14 +1,31 @@
 "use client"
 
-import { Settings, Sparkles, User } from "lucide-react"
+import { useRouter } from "next/navigation"
+import {
+  ChevronDown,
+  CreditCard,
+  LogOut,
+  Settings,
+  Sparkles,
+  User,
+} from "lucide-react"
+import { signOut, useSession } from "next-auth/react"
 
-import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
-interface DashboardHeaderProps {
-  userName?: string
-}
+export function DashboardHeader() {
+  const { data: session } = useSession()
+  const router = useRouter()
+  const handleLogout = () => {
+    signOut({ redirect: true, callbackUrl: "/" })
+  }
 
-export function DashboardHeader({ userName }: DashboardHeaderProps) {
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between max-w-7xl mx-auto">
@@ -19,18 +36,45 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
           <h1 className="text-lg font-semibold text-gray-900">Resumind</h1>
         </div>
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm">
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
-          </Button>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <User className="w-4 h-4 text-blue-600" />
-            </div>
-            <span className="text-sm font-medium text-gray-700">
-              {userName}
-            </span>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 focus:outline-none">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-blue-600" />
+                </div>
+                <span className="text-sm font-medium text-gray-700">
+                  {session?.user.name}
+                </span>
+                <ChevronDown className="h-4 w-4 text-gray-700" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              {/* User email at the top */}
+              <div className="px-3 py-2 text-xs text-gray-500">
+                {session?.user.email}
+              </div>
+              <DropdownMenuSeparator />
+              {/* Billing */}
+              <DropdownMenuItem>
+                <CreditCard className="mr-2 h-4 w-4 text-gray-500" />
+                Billing
+              </DropdownMenuItem>
+              {/* Settings */}
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4 text-gray-500" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {/* Sign Out */}
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-red-600 focus:text-red-600"
+              >
+                <LogOut className="mr-2 h-4 w-4 text-red-600" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>

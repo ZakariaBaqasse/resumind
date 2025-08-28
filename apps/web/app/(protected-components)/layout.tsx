@@ -13,7 +13,7 @@ export default function DashboardLayout({
   return (
     <ProtectedComponents>
       <div className="min-h-screen bg-gray-50">
-        <DashboardHeader userName={session?.user.name!} />
+        <DashboardHeader />
         {children}
       </div>
     </ProtectedComponents>

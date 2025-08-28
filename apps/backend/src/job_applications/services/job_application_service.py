@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 from sqlalchemy.orm.attributes import flag_modified
 
 from src.core.types import Resume
@@ -58,6 +58,24 @@ class JobApplicationService:
             application_id, refresh=refresh
         )
 
+    def get_user_job_application(
+        self, application_id: str, user_id: str, *, refresh: bool = False
+    ) -> Optional[JobApplication]:
+        """
+        Get a job application by ID and user id.
+
+        Args:
+            application_id: The ID of the job application to retrieve
+            user_id: The ID of the user to whom the job application belong
+            refresh: If True, refresh the object from the database.
+
+        Returns:
+            The job application if found, None otherwise
+        """
+        return self.job_application_repository.get_by_id_and_user(
+            application_id, user_id, refresh=refresh
+        )
+
     def list_job_applications(self) -> List[JobApplication]:
         """
         List all users.
@@ -66,6 +84,44 @@ class JobApplicationService:
             A list of all users
         """
         return self.job_application_repository.get_all()
+
+    def list_paginated(
+        self, user_id: str, offset: int = 0, limit: int = 30
+    ) -> Tuple[List[JobApplication], int]:
+        """
+        List job applications with pagination
+
+        Args:
+            user_id: the id of the authenticated user
+            offset (int, optional): The number of job applications to skip. Defaults to 0.
+            limit (int, optional): The maximum number of job applications to return. Defaults to 30.
+
+        Returns:
+            Tuple[List[JobApplication], int]: A tuple containing the list of job applications and the total count
+        """
+        try:
+            return self.job_application_repository.list_paginated(
+                user_id, offset, limit
+            )
+        except Exception as e:
+            logger.error(f"Error listing paginated apps: {e}")
+            raise e
+
+    def search_job_applications(
+        self, user_id: str, search_term: str, offset: int = 0, limit: int = 100
+    ) -> Tuple[List[JobApplication], int]:
+        """
+        List job applications with names or descriptions that match a pattern using LIKE search
+        """
+        try:
+            return self.job_application_repository.search_job_applications(
+                user_id, search_term, offset, limit
+            )
+        except Exception as e:
+            logger.error(
+                f"Error searching job applications by name or description like '{search_term}': {e}"
+            )
+            return [], 0
 
     def delete_job_application(self, application_id: str) -> bool:
         """

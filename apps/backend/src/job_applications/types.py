@@ -254,3 +254,11 @@ class CoverLetterResponse(BaseModel):
     content: str = Field(
         ..., description="The full text content of the generated cover letter."
     )
+
+
+class JobApplicationPreview(BaseModel):
+    id: str
+    job_title: str
+    company_name: str
+    created_at: datetime
+    resume_generation_status: Optional[str]

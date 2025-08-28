@@ -5,15 +5,13 @@ import { useRouter } from "next/navigation"
 
 import { useGetUser } from "@/hooks/dashboard/use-get-user"
 
-import { CustomResumesSection } from "./custom-resumes-section"
-import { DashboardHeader } from "./header"
+import JobApplicationsList from "./job-applications-list"
 import { DashboardLoadingSkeleton } from "./loading-skeleton"
 import { QuickActions } from "./quick-actions"
 import ViewResumeDialog from "./view-resume-dialog"
 import { WelcomeSection } from "./welcome-section"
 
 export default function DashboardComponent() {
-  const [searchQuery, setSearchQuery] = useState("")
   const [isViewingResume, setIsViewingResume] = useState(false)
   const { data: user, isLoading, error } = useGetUser()
   const router = useRouter()
@@ -59,10 +57,7 @@ export default function DashboardComponent() {
           onEditResume={handleEditResume}
         />
 
-        <CustomResumesSection
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
+        <JobApplicationsList />
       </div>
       <ViewResumeDialog
         isViewingResume={isViewingResume}

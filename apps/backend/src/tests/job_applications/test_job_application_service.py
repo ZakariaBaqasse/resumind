@@ -1,5 +1,6 @@
 import pytest
 import uuid
+from src.job_applications.services import job_application_service
 from src.user.model import User
 from src.configs.database_config import get_session_context
 from src.core.service_registry import ServiceRegistry
@@ -155,3 +156,12 @@ def test_update_company_profile_research_results(
 
         ###ASSERT
         assert updated_application.company_profile["research_results"]
+
+
+def test_list_paginated_job_applications():
+    with get_session_context() as session:
+        job_application_service = ServiceRegistry.get_job_application_service(session)
+        paginated_results = job_application_service.list_paginated(
+            "55006113-e437-4b22-9637-2b99a3885da0"
+        )
+        assert len(paginated_results) > 0

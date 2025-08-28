@@ -115,3 +115,17 @@ export type JobApplicationSnapshot = {
   updated_at?: string | null
   events: ApplicationEvent[]
 }
+
+export type JobApplicationPreview = {
+  id: string
+  job_title: string
+  company_name: string
+  resume_generation_status?: ResumeGenerationStatus | null
+  created_at: string
+}
+
+export type PaginatedJobApplicationsPreviews = {
+  items: JobApplicationPreview[]
+  total: number
+  has_next: boolean
+}

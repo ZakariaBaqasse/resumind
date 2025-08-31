@@ -1,6 +1,7 @@
 from logging import getLogger
 from typing import List, Optional, Dict, Tuple
 from sqlalchemy.orm.attributes import flag_modified
+from datetime import datetime, timezone
 
 from src.core.types import Resume
 from src.job_applications.model import JobApplication
@@ -11,6 +12,7 @@ from src.job_applications.types import (
     DiscoveredCompanyProfile,
     ResearchPlan,
     ResumeGenerationStatus,
+    ResumesCreationStats,
 )
 
 
@@ -285,4 +287,29 @@ class JobApplicationService:
             logger.error(
                 f"ERROR: in JobApplicationService in save_generated_cover_letter: {str(e)}"
             )
+            raise e
+
+    def get_stats(self, user_id: str) -> ResumesCreationStats:
+        try:
+            all_job_applications = self.job_application_repository.get_all(user_id)
+
+            now = datetime.now(timezone.utc)
+            created_this_month = [
+                app
+                for app in all_job_applications
+                if app.created_at.year == now.year and app.created_at.month == now.month
+            ]
+            completed = [
+                app
+                for app in all_job_applications
+                if app.resume_generation_status
+                == ResumeGenerationStatus.COMPLETED.value
+            ]
+            return ResumesCreationStats(
+                total_created=len(all_job_applications),
+                created_this_month=len(created_this_month),
+                completed=len(completed),
+            )
+        except Exception as e:
+            logger.error(f"ERROR: in JobApplicationService in get_stats: {str(e)}")
             raise e

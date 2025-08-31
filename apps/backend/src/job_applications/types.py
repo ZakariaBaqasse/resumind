@@ -262,3 +262,9 @@ class JobApplicationPreview(BaseModel):
     company_name: str
     created_at: datetime
     resume_generation_status: Optional[str]
+
+
+class ResumesCreationStats(BaseModel):
+    total_created: int
+    created_this_month: int
+    completed: int

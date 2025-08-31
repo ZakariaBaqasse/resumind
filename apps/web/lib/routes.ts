@@ -10,6 +10,7 @@ export const APPLICATION_BACKEND_ROUTES = {
   start_generation: "/application/start-generation",
   listJobApplications: "/application/list",
   searchJobApplications: "/application/search",
+  getStats: "/application/stats",
   deleteJobApplication: (id: string) => `/application/${id}`,
   getJobApplication: (id: string) => `/application/${id}`,
   updateGeneratedResume: (id: string) => `/application/${id}/resume`,

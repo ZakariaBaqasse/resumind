@@ -298,6 +298,23 @@ async def application_snapshot_sse(
     )
 
 
+@job_application_router.get("/stats")
+async def get_resume_creation_stats(
+    current_user: User = Depends(get_current_user),
+    job_application_service: JobApplicationService = Depends(
+        get_job_application_service
+    ),
+):
+    try:
+        stats = job_application_service.get_stats(current_user.id)
+        return stats
+    except Exception as e:
+        logger.error(
+            f"ERROR in job_application router get_resume_creation_stats {str(e)}"
+        )
+        return HTTPException(status_code=500, detail="Internal Server error")
+
+
 class UpdateResumeRequest(BaseModel):
     resume: Resume
 

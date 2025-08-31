@@ -1,26 +1,29 @@
-import { redirect } from "next/navigation"
-import { getServerSession } from "next-auth"
+import { CTAFooter } from "@/components/landing/cta-footer"
+import { FAQ } from "@/components/landing/faq"
+import { Features } from "@/components/landing/features"
+import { Footer } from "@/components/landing/footer"
+import { Header } from "@/components/landing/header"
+import { Hero } from "@/components/landing/hero"
+import { HowItWorks } from "@/components/landing/how-it-works"
+import { Integrations } from "@/components/landing/integrations"
+import { Limitations } from "@/components/landing/limitations"
+import { Outcomes } from "@/components/landing/outcomes"
+import { ProblemValue } from "@/components/landing/problem-value"
 
-import { Features } from "@/components/home/features"
-import { Hero } from "@/components/home/hero"
-import { Pricing } from "@/components/home/pricing"
-import { Testimonials } from "@/components/home/testimonials"
-import { Footer } from "@/components/layout/footer"
-import { Navbar } from "@/components/layout/navbar"
-
-export default async function Home() {
-  const session = await getServerSession()
-  if (session) {
-    redirect("/dashboard")
-  }
+export default function HomePage() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <Navbar />
+    <div className="min-h-screen bg-gradient-to-br from-vibrant-blue via-periwinkle to-soft-pink">
+      <Header />
       <main>
         <Hero />
+        <ProblemValue />
+        <HowItWorks />
         <Features />
-        <Testimonials />
-        <Pricing />
+        <Integrations />
+        <Outcomes />
+        <Limitations />
+        <FAQ />
+        <CTAFooter />
       </main>
       <Footer />
     </div>

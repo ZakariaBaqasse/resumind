@@ -7,7 +7,7 @@ export function WelcomeSection({ userName }: WelcomeSectionProps) {
 
   return (
     <div className="text-center">
-      <h2 className="text-3xl font-bold text-gray-900 mb-2">
+      <h2 className="text-3xl font-bold text-foreground mb-2">
         Welcome back, {firstName}!
       </h2>
       <p className="text-gray-600">

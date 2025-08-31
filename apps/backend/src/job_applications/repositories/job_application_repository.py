@@ -79,14 +79,14 @@ class JobApplicationRepository:
             self.session.refresh(job_app)
         return job_app
 
-    def get_all(self) -> List[JobApplication]:
+    def get_all(self, user_id: str) -> List[JobApplication]:
         """
         Retrieve all users.
 
         Returns:
             A list of all users
         """
-        statement = select(JobApplication)
+        statement = select(JobApplication).where(JobApplication.user_id == user_id)
         results = self.session.exec(statement)
         return results.all()
 

@@ -66,9 +66,15 @@ export function Header() {
 
           {/* Desktop CTAs */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button onClick={() => router.push("/auth/signup")} size="lg">
-              <LogIn className="w-4 h-4 mr-2" />
+            <Button onClick={() => router.push("/auth/signup")} size="default">
               Register
+            </Button>
+            <Button
+              onClick={() => router.push("/auth/login")}
+              variant="outline"
+              size="default"
+            >
+              Login
             </Button>
           </div>
 

@@ -1,23 +1,24 @@
-import { Briefcase, Plus, Trash2, X } from "lucide-react"
-import {
-  Control,
-  FieldArrayWithId,
-  useFieldArray,
-  useWatch,
-} from "react-hook-form"
+import { Briefcase, Plus, Trash2 } from "lucide-react"
+import { Control, FieldArrayWithId, useWatch } from "react-hook-form"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "../ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card"
 import {
   FormControl,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
+} from "../ui/form"
+import { Input } from "../ui/input"
+import { Label } from "../ui/label"
+import { Textarea } from "../ui/textarea"
 
 interface WorkExperienceFormProps {
   control: Control<any>
@@ -26,7 +27,7 @@ interface WorkExperienceFormProps {
   removeWork: (index: number) => void
 }
 
-export function WorkExperienceForm({
+export default function WorkExperienceForm({
   control,
   workFields,
   appendWork,
@@ -40,96 +41,122 @@ export function WorkExperienceForm({
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Briefcase className="w-5 h-5 text-blue-600" />
-            Work Experience
-          </CardTitle>
-          <Button onClick={appendWork} size="sm" variant="outline">
-            <Plus className="w-4 h-4 mr-2" />
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Briefcase className="size-5 text-primary" />
+              Work Experience
+            </CardTitle>
+            <CardDescription>
+              Your professional work history and achievements
+            </CardDescription>
+          </div>
+          <Button onClick={appendWork} size="sm">
+            <Plus className="mr-2 size-4" />
             Add Experience
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {workFields.map((field, index) => (
+        {workFields.map((exp, index) => (
           <div
-            key={field.id}
-            className="space-y-4 p-4 border border-gray-200 rounded-lg"
+            key={exp.id}
+            className="space-y-4 p-4 border border-border rounded-lg"
           >
-            <div className="flex justify-between items-start">
-              <h2 className="font-semibold text-lg text-gray-900">
+            <div className="flex items-center justify-between">
+              <h4 className="font-semibold text-lg text-gray-900">
                 {watchedWorkExperiences?.[index]?.position ||
                   `Experience ${index + 1}`}
-              </h2>
-
+              </h4>
               <Button
-                onClick={() => removeWork(index)}
-                size="sm"
                 variant="ghost"
-                className="text-red-600 hover:text-red-700"
+                size="sm"
+                onClick={() => removeWork(index)}
+                className="text-destructive hover:text-destructive"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="size-4" />
               </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={control}
-                name={`work_experiences.${index}.company_name`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name={`work_experiences.${index}.position`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Position</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name={`work_experiences.${index}.start_date`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Date (YYYY-MM)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="2021-03" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name={`work_experiences.${index}.end_date`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>End Date (YYYY-MM)</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        value={field.value ?? ""}
-                        placeholder="2023-05 or leave empty for current"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <FormField
+                  control={control}
+                  name={`work_experiences.${index}.company_name`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <FormField
+                  control={control}
+                  name={`work_experiences.${index}.position`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Position</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <FormField
+                  control={control}
+                  name={`work_experiences.${index}.start_date`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Date (YYYY-MM)</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="2021-03" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <FormField
+                  control={control}
+                  name={`work_experiences.${index}.end_date`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End Date (YYYY-MM)</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value ?? ""}
+                          placeholder="2023-05 or leave empty for current"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
-            <div>
+            {/* <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id={`current-${exp.id}`}
+                checked={exp.current}
+                onChange={(e) =>
+                  updateWorkExperience(exp.id, "current", e.target.checked)
+                }
+                className="rounded border-border"
+              />
+              <Label htmlFor={`current-${exp.id}`}>
+                Currently working here
+              </Label>
+            </div> */}
+            <div className="space-y-2">
               <Label>Responsibilities</Label>
               <div className="space-y-2 mt-2">
                 <FormField
@@ -138,7 +165,7 @@ export function WorkExperienceForm({
                   render={({ field: respField }) => (
                     <FormItem className="flex-1">
                       <FormControl>
-                        <Textarea {...respField} rows={5} className="flex-1" />
+                        <Textarea {...respField} rows={10} className="flex-1" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -4,14 +4,13 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { EditCoverLetterSchema } from "@/schema/edit-cover-letter.schema"
 import { ResumeFormType } from "@/schema/resume.schema"
-import { ArrowLeft, Building, FileText, Loader2, Mail } from "lucide-react"
+import { FileText, Loader2, Mail } from "lucide-react"
 
 import { useGetJobApplication } from "@/hooks/dashboard/use-get-job-application"
 import { useUpdateGeneratedCoverLetter } from "@/hooks/dashboard/use-update-generated-cover-letter"
 import { useUpdateGeneratedResume } from "@/hooks/dashboard/use-update-generated-resume"
-import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import ResumeEditForm from "@/components/resume-form"
+import { ResumeForm } from "@/components/resume-form"
 import PageLoader from "@/components/shared/page-loader"
 
 import CoverLetterEditForm from "./cover-letter-edit-form"
@@ -95,16 +94,7 @@ export default function ApplicationEdit({
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center h-16">
           {/* Left: Back Button */}
-          <div className="flex-1 flex items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push("/dashboard")}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-          </div>
+          <div className="flex-1 flex items-center"></div>
           {/* Center: Title and Icon */}
 
           <div className="flex gap-2 flex-col items-center">
@@ -148,7 +138,7 @@ export default function ApplicationEdit({
           {/* Resume Tab */}
           <TabsContent value="resume" className="space-y-8">
             {/* Personal Information */}
-            <ResumeEditForm
+            <ResumeForm
               resume={application?.generated_resume}
               onSubmit={handleSaveResume}
               submitButtonText="Save changes"
@@ -163,6 +153,9 @@ export default function ApplicationEdit({
           <TabsContent value="cover-letter" className="space-y-8">
             {/* Cover Letter Settings */}
             <CoverLetterEditForm
+              generatedResume={application?.generated_resume!}
+              company={application?.company_name!}
+              jobTitle={application?.job_title!}
               onSubmit={handleSaveCoverLetter}
               isSubmitting={isUpdatingCoverLetter}
               submitError={coverLetterUpdateError}

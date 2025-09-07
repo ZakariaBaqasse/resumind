@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 
-import { ContentLoader } from "../job-applications-list/content-loader"
+import { ContentLoader } from "./content-loader"
 import JobApplicationPreviewCard from "./preview-card"
 
 export function ApplicationsPage() {

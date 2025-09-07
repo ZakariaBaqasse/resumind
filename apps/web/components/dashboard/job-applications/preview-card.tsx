@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 
 import { JobApplicationPreview } from "@/types/application.types"
-import { cn } from "@/lib/utils"
+import { cn, formatDate } from "@/lib/utils"
 import { useDeleteJobApplication } from "@/hooks/dashboard/use-delete-job-application"
 import {
   AlertDialog,
@@ -36,14 +36,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { getStatusInfo } from "@/components/shared/job-applications.utils"
-
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })
-}
 
 interface JobApplicationPreviewCardProps {
   app: JobApplicationPreview

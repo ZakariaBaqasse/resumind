@@ -1,12 +1,23 @@
 import { useState } from "react"
-import { Plane, Plus, X } from "lucide-react"
+import { Plus, Trash2, Volleyball } from "lucide-react"
 import { Control, useFormContext, useWatch } from "react-hook-form"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { Badge } from "../ui/badge"
+import { Button } from "../ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card"
+import { Input } from "../ui/input"
 
-export default function HobbiesForm({ control }: { control: Control<any> }) {
+interface HobbiesFormProps {
+  control: Control<any>
+}
+
+export function HobbiesForm({ control }: HobbiesFormProps) {
   const { setValue } = useFormContext()
   const hobbies: string[] = useWatch({ control, name: "hobbies" }) || []
   const [newHobby, setNewHobby] = useState("")
@@ -23,55 +34,48 @@ export default function HobbiesForm({ control }: { control: Control<any> }) {
       hobbies.filter((_, i) => i !== idx)
     )
   }
-
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Plane className="w-5 h-5 text-blue-600" />
+          <Volleyball className="size-5 text-primary" />
           Hobbies
         </CardTitle>
+        <CardDescription>Your hobbies that you enjoy</CardDescription>
+        <Button type="button" onClick={addHobby} size="sm" variant="outline">
+          <Plus className="w-4 h-4 mr-2" />
+          Add Hobby
+        </Button>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex gap-2">
-            <Input
-              value={newHobby}
-              onChange={(e) => setNewHobby(e.target.value)}
-              placeholder="Add a hobby"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  addHobby()
-                }
-              }}
-            />
-            <Button
-              type="button"
-              onClick={addHobby}
-              variant="outline"
-              size="sm"
+        <div className="flex gap-2">
+          <Input
+            placeholder="Add a hobby..."
+            value={newHobby}
+            onChange={(e) => setNewHobby(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                addHobby()
+              }
+            }}
+          />
+          <Button type="button" onClick={addHobby} size="sm">
+            <Plus className="size-4" />
+          </Button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {hobbies.map((hobby, index) => (
+            <Badge
+              key={hobby}
+              variant="secondary"
+              className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+              onClick={() => removeHobby(index)}
             >
-              <Plus className="w-4 h-4 mr-1" /> Add
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {hobbies.map((hobby, idx) => (
-              <span
-                key={idx}
-                className="flex items-center bg-gray-100 px-3 py-1 rounded-full text-sm"
-              >
-                {hobby}
-                <button
-                  type="button"
-                  className="ml-2 text-gray-500 hover:text-red-600"
-                  onClick={() => removeHobby(idx)}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </span>
-            ))}
-          </div>
+              {hobby}
+              <Trash2 className="ml-1 size-3" />
+            </Badge>
+          ))}
         </div>
       </CardContent>
     </Card>

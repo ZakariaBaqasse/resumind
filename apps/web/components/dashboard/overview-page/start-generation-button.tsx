@@ -1,5 +1,3 @@
-"use client"
-
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
@@ -7,12 +5,18 @@ import {
   startGenerationSchema,
 } from "@/schema/start-generation.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2, Plus } from "lucide-react"
+import { ArrowUpRight, Loader2, Plus, Sparkles } from "lucide-react"
 import { useForm } from "react-hook-form"
 
 import { useStartGeneration } from "@/hooks/application/use-start-generation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -21,9 +25,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-
 import {
   Form,
   FormControl,
@@ -31,10 +32,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "../ui/form"
-import { Label } from "../ui/label"
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
-export function CreateResumeCard() {
+export function StartGenerationButton() {
   const [isCreatingResume, setIsCreatingResume] = useState(false)
   const router = useRouter()
   const form = useForm<StartGenerationFormType>({
@@ -66,46 +69,39 @@ export function CreateResumeCard() {
       if (errors[key]?.message) {
         messages.push(`${prefix}${key}: ${errors[key].message}`)
       }
-      // For nested errors (arrays/objects)
-      if (
-        typeof errors[key] === "object" &&
-        !Array.isArray(errors[key]) &&
-        errors[key] !== null
-      ) {
-        messages = messages.concat(
-          getErrorMessages(errors[key], `${prefix}${key}.`)
-        )
-      }
-      // For arrays
-      if (Array.isArray(errors[key])) {
-        errors[key].forEach((item: any, idx: number) => {
-          messages = messages.concat(
-            getErrorMessages(item, `${prefix}${key}[${idx}].`)
-          )
-        })
-      }
     }
     return messages
   }, [])
 
   const errorMessages = getErrorMessages(errors)
-
   return (
-    <Card className="border-2 border-dashed border-gray-300 hover:border-blue-300 transition-colors">
-      <CardContent className="flex flex-col items-center justify-center h-full p-6 text-center">
-        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-          <Plus className="w-6 h-6 text-blue-600" />
-        </div>
-        <h3 className="font-semibold text-gray-900 mb-2">
-          Create Tailored Resume
-        </h3>
-        <p className="text-sm text-gray-600 mb-4">
-          Paste a job description to generate a customized resume
-        </p>
+    <Card
+      className="flex flex-col justify-center h-fit group relative overflow-hidden border-primary/20 bg-gradient-to-br from-primary/5 via-background to-background transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 max-w-md w-full animate-in slide-in-from-bottom-4"
+      style={{ animationDelay: "100ms" }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <CardHeader className="relative pb-4 text-center">
+        <CardTitle className="flex items-center justify-center gap-3 text-xl">
+          <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+            <Sparkles className="size-5" />
+          </div>
+          Start AI Generation
+        </CardTitle>
+        <CardDescription className="text-base leading-relaxed">
+          Generate a complete job application package with tailored resume and
+          cover letter
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="relative">
         <Dialog open={isCreatingResume} onOpenChange={setIsCreatingResume}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              Get Started
+            <Button
+              size="lg"
+              className="w-full bg-primary hover:bg-primary/90 shadow-sm transition-all duration-200 hover:shadow-md group-hover:scale-[1.02]"
+            >
+              <Plus className="mr-2 size-4" />
+              Generate Application
+              <ArrowUpRight className="ml-2 size-4 opacity-0 transition-all duration-200 group-hover:opacity-100" />
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">

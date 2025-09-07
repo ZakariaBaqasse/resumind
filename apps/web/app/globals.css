@@ -35,7 +35,7 @@
     /* Gradient Colors */
     --gradient-from: 227 88% 61%; /* #476BF3 */
     --gradient-to: 330 72% 85%; /* #F3B5D3 - soft pink */
-    --gradient-via: 230 67% 88%; /* #CCD3F5 - light blue */
+    --gradient-via: 230 67% 88%; /* #CCD3F5 - light blue */ --sidebar-background: 0 0% 98%; --sidebar-foreground: 240 5.3% 26.1%; --sidebar-primary: 240 5.9% 10%; --sidebar-primary-foreground: 0 0% 98%; --sidebar-accent: 240 4.8% 95.9%; --sidebar-accent-foreground: 240 5.9% 10%; --sidebar-border: 220 13% 91%; --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -57,7 +57,7 @@
     --destructive-foreground: 222 71% 97%; /* #F3F6FD - very light blue */
     --border: 351 5% 74%; /* #C1BABB - silver */
     --input: 351 5% 74%; /* #C1BABB - silver */
-    --ring: 227 88% 61%; /* #476BF3 - vibrant blue */
+    --ring: 227 88% 61%; /* #476BF3 - vibrant blue */ --sidebar-background: 240 5.9% 10%; --sidebar-foreground: 240 4.8% 95.9%; --sidebar-primary: 224.3 76.3% 48%; --sidebar-primary-foreground: 0 0% 100%; --sidebar-accent: 240 3.7% 15.9%; --sidebar-accent-foreground: 240 4.8% 95.9%; --sidebar-border: 240 3.7% 15.9%; --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 

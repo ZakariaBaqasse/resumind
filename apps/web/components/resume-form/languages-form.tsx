@@ -1,120 +1,125 @@
-import { Code, Languages, Plus, X } from "lucide-react"
+import { useState } from "react"
+import { Code, Languages, Plus, Trash2 } from "lucide-react"
 import { Control, FieldArrayWithId } from "react-hook-form"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "../ui/badge"
+import { Button } from "../ui/button"
 import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card"
+import { Input } from "../ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select"
 
 interface LanguagesFormProps {
   control: Control<any>
-  languageFields: FieldArrayWithId<any, any, any>[]
+  languagesFields: FieldArrayWithId<any, any, any>[]
   appendLanguage: (value: any) => void
   removeLanguage: (index: number) => void
 }
 
 export function LanguagesForm({
   control,
-  languageFields,
+  languagesFields,
   appendLanguage,
   removeLanguage,
 }: LanguagesFormProps) {
+  const [newLanguage, setNewLanguage] = useState("")
+  const [proficiency, setProficiency] = useState("")
+  const [error, setError] = useState("")
+  const handleAppendLanguage = () => {
+    if (newLanguage.trim() === "" || proficiency.trim() === "") {
+      control.setError("languages", {
+        type: "onBlur",
+        message: "Please add a language and a proficiency level",
+      })
+      setError("Please add a language and a proficiency level")
+      return
+    }
+    setError("")
+    appendLanguage({
+      name: newLanguage,
+      proficiency: proficiency,
+    })
+    setNewLanguage("")
+    setProficiency("")
+  }
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Languages className="w-5 h-5 text-blue-600" />
-            Languages
-          </CardTitle>
-          <Button onClick={appendLanguage} size="sm" variant="outline">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Language
-          </Button>
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <Languages className="size-5 text-primary" />
+          Languages
+        </CardTitle>
+        <CardDescription>The languages you master</CardDescription>
+        <Button
+          onClick={handleAppendLanguage}
+          type="button"
+          size="sm"
+          variant="outline"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add language
+        </Button>
       </CardHeader>
-      <CardContent>
-        {languageFields.length === 0 && (
-          <div className="text-sm text-gray-500 mb-2">
-            No languages added yet.
-          </div>
-        )}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {languageFields.map((field, index) => (
-            <div key={field.id}>
-              {/* Inputs row */}
-              <div className="flex gap-2 items-end">
-                <div className="flex-1">
-                  <FormField
-                    control={control}
-                    name={`languages.${index}.name`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Language</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Language" />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="flex-1">
-                  <FormField
-                    control={control}
-                    name={`languages.${index}.proficiency`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Proficiency</FormLabel>
-                        <FormControl>
-                          <Input {...field} placeholder="Proficiency level" />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <Button
-                  onClick={() => removeLanguage(index)}
-                  size="sm"
-                  variant="outline"
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-              {/* Error messages row */}
-              <div className="flex gap-2 mt-2 mb-4">
-                <div className="flex-1">
-                  <FormField
-                    control={control}
-                    name={`languages.${index}.name`}
-                    render={() => (
-                      <FormItem>
-                        <FormMessage className="min-h-[20px]" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="flex-1">
-                  <FormField
-                    control={control}
-                    name={`languages.${index}.proficiency`}
-                    render={() => (
-                      <FormItem>
-                        <FormMessage className="min-h-[20px]" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className="w-[40px]" />
-              </div>
-            </div>
-          ))}
+      <CardContent className="space-y-4">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Add a language..."
+            value={newLanguage}
+            onChange={(e) => setNewLanguage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                handleAppendLanguage()
+              }
+            }}
+          />
+          <Select value={proficiency} onValueChange={setProficiency}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Proficiency" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="beginner">Beginner</SelectItem>
+              <SelectItem value="intermediate">Intermediate</SelectItem>
+              <SelectItem value="advanced">Advanced</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button type="button" onClick={handleAppendLanguage} size="sm">
+            <Plus className="size-4" />
+          </Button>
+          {error && (
+            <div className="text-destructive text-sm my-2">{error}</div>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {languagesFields.map((language, index) => {
+            const languageProficiency =
+              language["proficiency"] !== undefined &&
+              language["proficiency"].toLowerCase() !== "not provided"
+                ? language["proficiency"]
+                : "Conversational"
+            return (
+              <Badge
+                key={`${language["name"]}-${index}`}
+                variant="secondary"
+                className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => removeLanguage(index)}
+              >
+                {language["name"]}({languageProficiency})
+                <Trash2 className="ml-1 size-3" />
+              </Badge>
+            )
+          })}
         </div>
       </CardContent>
     </Card>

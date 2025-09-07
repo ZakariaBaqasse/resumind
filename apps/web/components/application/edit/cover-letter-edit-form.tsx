@@ -1,14 +1,16 @@
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 import {
   editCoverLetterSchema,
   EditCoverLetterSchema,
 } from "@/schema/edit-cover-letter.schema"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CheckCircle } from "lucide-react"
-import { Form, FormProvider, useForm } from "react-hook-form"
+import { PDFDownloadLink } from "@react-pdf/renderer"
+import { CheckCircle, Download, Edit2, Eye } from "lucide-react"
+import { FormProvider, useForm, useWatch } from "react-hook-form"
 
+import { Resume } from "@/types/resume.types"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   FormControl,
   FormField,
@@ -17,8 +19,13 @@ import {
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 
+import CoverLetterPDF from "./cover-letter-pdf"
+
 type CoverLetterEditFormProps = {
   coverLetterContent: string
+  generatedResume: Resume
+  company: string
+  jobTitle: string
   onSubmit: (data: EditCoverLetterSchema) => Promise<void>
   isSubmitting?: boolean
   submitError: any
@@ -27,20 +34,28 @@ type CoverLetterEditFormProps = {
 
 export default function CoverLetterEditForm({
   coverLetterContent,
+  generatedResume,
+  company,
+  jobTitle,
   onSubmit,
   isSubmitting,
   submitError,
   saveSuccess,
 }: CoverLetterEditFormProps) {
+  const [editMode, setEditMode] = useState(false)
   const form = useForm<EditCoverLetterSchema>({
     resolver: zodResolver(editCoverLetterSchema),
     defaultValues: { cover_letter_content: coverLetterContent ?? "" },
     mode: "onChange",
   })
-  const { control, reset, handleSubmit, formState } = form
+  const { control, handleSubmit, formState } = form
   const { isValid, errors } = formState
 
-  // Helper to recursively extract error messages
+  const watchedCoverLetter = useWatch({
+    control,
+    name: "cover_letter_content",
+  })
+
   const getErrorMessages = useCallback((errors: any, prefix = ""): string[] => {
     if (!errors) return []
     let messages: string[] = []
@@ -62,9 +77,24 @@ export default function CoverLetterEditForm({
     }
   }
 
-  return (
-    <>
-      <div className="space-y-6">
+  if (editMode) {
+    return (
+      <div className="space-y-6 animate-in fade-in-50 duration-500">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Cover Letter Editor
+            </h1>
+            <p className="text-muted-foreground">
+              Edit your generated cover letter
+            </p>
+          </div>
+          <Button variant="outline" onClick={() => setEditMode(false)}>
+            <Eye className="mr-2 size-4" />
+            Preview
+          </Button>
+        </div>
+
         {errorMessages.length > 0 && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
             <div className="font-semibold text-red-700 mb-2">
@@ -104,14 +134,19 @@ export default function CoverLetterEditForm({
                 </FormItem>
               )}
             />
-            {/* Submit Button and Success Message */}
-            <div className="flex flex-col items-center pt-6">
+            <div className="flex justify-end pt-4">
               <Button
                 disabled={isSubmitting || !isValid || saveSuccess}
                 type="submit"
                 className={`px-8 py-2 rounded text-white text-lg font-semibold transition-colors duration-500
-                ${saveSuccess ? "bg-green-600" : "bg-blue-600 hover:bg-blue-700"}
-                ${isSubmitting || !isValid ? "opacity-60 cursor-not-allowed" : ""}
+                ${
+                  saveSuccess ? "bg-green-600" : "bg-blue-600 hover:bg-blue-700"
+                }
+                ${
+                  isSubmitting || !isValid
+                    ? "opacity-60 cursor-not-allowed"
+                    : ""
+                }
               `}
               >
                 {saveSuccess ? (
@@ -127,18 +162,52 @@ export default function CoverLetterEditForm({
           </form>
         </FormProvider>
       </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6 animate-in fade-in-50 duration-500">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Cover Letter Preview
+          </h1>
+          <p className="text-muted-foreground">
+            Preview your generated cover letter
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setEditMode(true)}>
+            <Edit2 className="mr-2 size-4" />
+            Edit
+          </Button>
+          <PDFDownloadLink
+            document={
+              <CoverLetterPDF
+                coverLetter={watchedCoverLetter}
+                company={company}
+                generatedResume={generatedResume}
+                jobTitle={jobTitle}
+              />
+            }
+            fileName="Cover_Letter.pdf"
+          >
+            {({ loading }) => (
+              <Button disabled={loading}>
+                <Download className="mr-2 size-4" />
+                {loading ? "Generating..." : "Download PDF"}
+              </Button>
+            )}
+          </PDFDownloadLink>
+        </div>
+      </div>
       <Card>
-        <CardHeader>
-          <CardTitle>Preview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-white border border-gray-200 rounded-lg p-8 max-w-2xl mx-auto">
-            <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-900">
-              {coverLetterContent}
-            </div>
+        <CardContent className="p-8">
+          <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-900 bg-white p-6 rounded-lg shadow-sm">
+            {watchedCoverLetter}
           </div>
         </CardContent>
       </Card>
-    </>
+    </div>
   )
 }

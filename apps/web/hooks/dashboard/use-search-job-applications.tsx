@@ -10,6 +10,7 @@ const LIMIT = 30
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export function useJobApplicationsSearch(
+  limit: number = LIMIT,
   options?: SWRInfiniteConfiguration<PaginatedJobApplicationsPreviews, APIError>
 ) {
   const { data: session } = useSession()
@@ -36,8 +37,8 @@ export function useJobApplicationsSearch(
       url.searchParams.set("search_term", searchTerm)
     }
 
-    url.searchParams.set("offset", `${pageIndex * LIMIT}`)
-    url.searchParams.set("limit", `${LIMIT}`)
+    url.searchParams.set("offset", `${pageIndex * limit}`)
+    url.searchParams.set("limit", `${limit}`)
     return url.toString()
   }
 
@@ -65,6 +66,7 @@ export function useJobApplicationsSearch(
     isReachingEnd,
     searchTerm,
     setSearchTerm,
+    size,
     loadMore: () => setSize(size + 1),
     mutate,
     data,

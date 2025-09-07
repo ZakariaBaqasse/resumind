@@ -1,16 +1,26 @@
+"use client"
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Filter, Search } from "lucide-react"
-import { useSession } from "next-auth/react"
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  FileText,
+  Filter,
+  Plus,
+  Search,
+} from "lucide-react"
 
 import { useJobApplications } from "@/hooks/dashboard/use-get-job-applications"
 import { useJobApplicationsSearch } from "@/hooks/dashboard/use-search-job-applications"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 
 import { ContentLoader } from "./content-loader"
 import JobApplicationPreviewCard from "./preview-card"
 
-export default function JobApplicationsList() {
+export function ApplicationsPage() {
   // State management
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearchMode, setIsSearchMode] = useState(false)
@@ -40,12 +50,17 @@ export default function JobApplicationsList() {
     loadMore: searchLoadMore,
     isLoadingMore: searchLoadingMore,
     data: searchData,
+    size: searchSize,
   } = useJobApplicationsSearch()
 
-  const { data: session } = useSession()
-
-  // Create a reference to the scrollable container
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const loadMore = useCallback(() => {
+    if (isSearchMode) {
+      searchLoadMore()
+    } else {
+      setBrowseSize(browseSize + 1)
+    }
+  }, [isSearchMode, searchLoadMore, setBrowseSize, browseSize])
 
   // Current data source based on mode
   const currentApps = isSearchMode ? searchApps : browseApps
@@ -69,15 +84,6 @@ export default function JobApplicationsList() {
       return browseData?.[0]?.total ?? 0
     }
   }, [isSearchMode, searchData, browseData])
-
-  // Load more function based on current mode
-  const loadMore = useCallback(() => {
-    if (isSearchMode) {
-      searchLoadMore()
-    } else {
-      setBrowseSize(browseSize + 1)
-    }
-  }, [isSearchMode, searchLoadMore, setBrowseSize, browseSize])
 
   // Check if content height is less than viewport height on initial load and after data changes
   useEffect(() => {
@@ -103,7 +109,6 @@ export default function JobApplicationsList() {
     currentReachingEnd,
     loadMore,
   ])
-
   const handleApplyFilters = useCallback(() => {
     setIsSearchMode(true)
     setSearchTerm(searchQuery.trim())
@@ -153,6 +158,8 @@ export default function JobApplicationsList() {
     }
   }, [handleScroll])
 
+  // Handle scroll event to detect when user is near bottom
+
   // Error message
   const errorMessage = useMemo(() => {
     if (isSearchMode && searchError) return "Search failed. Please try again."
@@ -162,30 +169,38 @@ export default function JobApplicationsList() {
   }, [isSearchMode, searchError, browseError])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in-50 duration-500">
+      {/* Page Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-semibold text-gray-900">
-          Your Job Applications
-        </h3>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="      Search job applications..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyUp={handleKeyPress}
-              className="w-full rounded-lg h-8 text-xs pr-8 bg-gray-50 border-gray-200 focus:border-blue-300"
-            />
-          </div>
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </Button>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground text-balance">
+            Applications
+          </h1>
+          <p className="text-muted-foreground text-pretty">
+            Manage your generated resumes and cover letters
+          </p>
         </div>
       </div>
-      {/* Search mode indicator */}
+
+      {/* Search and Filters */}
+      <Card>
+        <CardContent className="p-12">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by title, company, or job..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+                onKeyDown={handleKeyPress}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Applications Grid */}
       {isSearchMode && (
         <div className="px-4 py-2 bg-blue-50 border-b border-blue-100">
           <span className="text-xs text-blue-700">
@@ -209,11 +224,11 @@ export default function JobApplicationsList() {
             className="overflow-y-auto overflow-x-hidden p-2"
             ref={scrollContainerRef}
           >
-            <div className="grid mb-16 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-6 auto-rows-fr items-stretch">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               {currentApps.map((app, idx) => (
                 <div key={app.id} className="h-full">
                   <JobApplicationPreviewCard
-                    application={app}
+                    app={app}
                     onDelete={async () => await mutate()}
                   />
                 </div>

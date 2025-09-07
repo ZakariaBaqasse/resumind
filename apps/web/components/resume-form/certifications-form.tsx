@@ -1,17 +1,19 @@
-import { Award, Plus, Trash2 } from "lucide-react"
+import { useState } from "react"
+import { format } from "date-fns"
+import { Award, CalendarIcon, Plus, Trash2 } from "lucide-react"
 import { Control, FieldArrayWithId, useWatch } from "react-hook-form"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "../ui/button"
+import { Calendar } from "../ui/calendar"
 import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card"
+import { Input } from "../ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover"
 
 interface CertificationsFormProps {
   control: Control<any>
@@ -30,88 +32,130 @@ export function CertificationsForm({
     control,
     name: "certifications",
   })
+  const [newCertification, setNewCertification] = useState("")
+  const [issuer, setIssuer] = useState("")
+  const [issueDate, setIssueDate] = useState<Date | undefined>(undefined)
+  const [error, setError] = useState("")
+  const handleAppendCertification = () => {
+    if (newCertification.trim() === "" || issuer.trim() === "" || !issueDate) {
+      control.setError("certifications", {
+        type: "onBlur",
+        message: "Please add a certification, issuer and issue date",
+      })
+      setError("All fields are required")
+      return
+    }
+    setError("")
+
+    appendCertification({
+      name: newCertification,
+      issuer,
+      issue_date: issueDate.toLocaleDateString(),
+    })
+    setIssueDate(undefined)
+    setIssuer("")
+    setNewCertification("")
+  }
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Award className="w-5 h-5 text-blue-600" />
-            Certifications
-          </CardTitle>
-          <Button onClick={appendCertification} size="sm" variant="outline">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Certification
-          </Button>
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <Award className="size-5 text-primary" />
+          Certifications
+        </CardTitle>
+        <CardDescription>
+          Your professional certifications and credentials
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {certificationFields.length === 0 && (
-          <div className="text-sm text-gray-500 mb-2">
-            No certifications added yet.
-          </div>
-        )}
-        {certificationFields.map((field, index) => (
-          <div
-            key={field.id}
-            className="space-y-4 p-4 border border-gray-200 rounded-lg"
-          >
-            <div className="flex justify-between items-start">
-              <h2 className="font-semibold text-lg text-gray-900">
-                {watchedCertifications?.[index]?.name ||
-                  `Certification ${index + 1}`}
-              </h2>
+      <CardContent className="space-y-4">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Add a certification..."
+            value={newCertification}
+            onChange={(e) => setNewCertification(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                handleAppendCertification()
+              }
+            }}
+          />
+          <Input
+            placeholder="Issuer e.g. Google, Coursera, ..."
+            value={issuer}
+            onChange={(e) => setIssuer(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                handleAppendCertification()
+              }
+            }}
+          />
+          <Popover>
+            <PopoverTrigger asChild>
               <Button
-                onClick={() => removeCertification(index)}
-                size="sm"
-                variant="ghost"
-                className="text-red-600 hover:text-red-700"
+                variant="outline"
+                data-empty={!issueDate}
+                className="data-[empty=true]:text-muted-foreground w-[280px] justify-start text-left font-normal"
               >
-                <Trash2 className="w-4 h-4" />
+                <CalendarIcon />
+                {issueDate ? (
+                  format(issueDate, "PPP")
+                ) : (
+                  <span>Pick a date</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                required
+                mode="single"
+                selected={issueDate}
+                onSelect={setIssueDate}
+                captionLayout="dropdown"
+              />
+            </PopoverContent>
+          </Popover>
+          <Button
+            type="button"
+            onClick={() => handleAppendCertification()}
+            size="sm"
+          >
+            <Plus className="size-4" />
+          </Button>
+          {error && (
+            <div className="text-destructive text-sm my-2">{error}</div>
+          )}
+        </div>
+        <div className="space-y-2">
+          {certificationFields.map((cert, index) => (
+            <div
+              key={`${cert["name"]}-${index}`}
+              className="flex items-center justify-between p-2 border border-border rounded-md"
+            >
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{cert["name"]}</span>
+                <span className="text-xs text-muted-foreground">
+                  {cert["issuer"]}
+                  {cert["issue_date"] && (
+                    <>
+                      {" · "}
+                      {cert["issue_date"]}
+                    </>
+                  )}
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => removeCertification(index)}
+                className="text-destructive hover:text-destructive"
+              >
+                <Trash2 className="size-4" />
               </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <FormField
-                control={control}
-                name={`certifications.${index}.name`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Certification Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name={`certifications.${index}.issuer`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Issuer</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={control}
-                name={`certifications.${index}.issue_date`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Issue Date (YYYY-MM)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="2023-06" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </CardContent>
     </Card>
   )

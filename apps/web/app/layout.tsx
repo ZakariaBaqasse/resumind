@@ -1,11 +1,8 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import localFont from "next/font/local"
 import { Analytics } from "@vercel/analytics/next"
 
 import "./globals.css"
-
-import { Suspense } from "react"
 
 import { Providers } from "@/lib/providers"
 

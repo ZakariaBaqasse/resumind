@@ -1,12 +1,18 @@
+# syntax=docker/dockerfile:1.7
+
 # Builder — install with uv
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 WORKDIR /app
-RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
+
+# Copy only dependency manifests first for better layer caching
+COPY pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv,id=uv-cache \
     uv sync --locked --no-install-project --no-dev
-COPY . /app
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev
+
+# Copy the rest of the app
+COPY . .
+RUN --mount=type=cache,target=/root/.cache/uv,id=uv-cache \
+    uv sync --locked --no-dev
 
 # Runtime
 FROM python:3.12-slim-bookworm
@@ -17,5 +23,4 @@ RUN groupadd -r fastapi && useradd -r -g fastapi fastapi && chown -R fastapi:fas
 USER fastapi
 WORKDIR /app
 EXPOSE 8000
-# Railway maps container port 8000 automatically for Docker deployments
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

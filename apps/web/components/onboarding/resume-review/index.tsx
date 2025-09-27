@@ -9,7 +9,7 @@ import { useSession } from "next-auth/react"
 import { Resume } from "@/types/resume.types"
 import { USER_BACKEND_ROUTES } from "@/lib/routes"
 import { useSaveResume } from "@/hooks/onboarding/use-save-resume"
-import ResumeEditForm from "@/components/resume-form"
+import { ResumeForm } from "@/components/resume-form"
 
 export default function ResumeReview() {
   const [isLoading, setIsLoading] = useState(true)
@@ -127,7 +127,7 @@ export default function ResumeReview() {
             </div>
           )}
 
-          <ResumeEditForm
+          <ResumeForm
             resume={resume}
             onSubmit={handleSubmit}
             isSubmitting={isMutating}

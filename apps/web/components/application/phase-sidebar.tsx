@@ -132,19 +132,19 @@ export function PhaseSidebar({
       {
         id: "company-research",
         name: "Company Research",
-        icon: <Building2 className="h-4 w-4" />,
+        icon: <Building2 className="size-4" />,
         status: getPhaseStatus("company-research"),
       },
       {
         id: "resume-generation",
         name: "Resume Generation",
-        icon: <Paperclip className="h-4 w-4" />,
+        icon: <Paperclip className="size-4" />,
         status: getPhaseStatus("resume-generation"),
       },
       {
         id: "cover-letter",
         name: "Cover Letter Generation",
-        icon: <LetterText className="h-4 w-4" />,
+        icon: <LetterText className="size-4" />,
         status: getPhaseStatus("cover-letter"),
       },
     ] as Phase[]

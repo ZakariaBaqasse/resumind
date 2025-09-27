@@ -20,12 +20,6 @@ const geistMono = localFont({
   weight: "100 900",
 })
 
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-})
-
 export const metadata: Metadata = {
   title: "ResumAI | Tailored AI-Powered Resumes in Minutes",
   description:
@@ -67,7 +61,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`font-sans ${inter.variable} antialiased`}>
+      <body className={`font-sans ${geistSans.variable} antialiased`}>
         <Providers>
           <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
           <Analytics />

@@ -61,7 +61,7 @@ export default function StatsCards({
               className="group relative overflow-hidden animate-in slide-in-from-bottom-4"
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <Skeleton className="h-4 w-40" />
+                <Skeleton className="size-40" />
                 <Skeleton className="h-8 w-8 rounded-lg" />
               </CardHeader>
               <CardContent className="space-y-2">

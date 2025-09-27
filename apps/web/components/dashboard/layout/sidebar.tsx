@@ -171,7 +171,7 @@ function AppSidebar() {
                   onClick={() => signOut({ redirect: true, callbackUrl: "/" })}
                   className="text-red-600 focus:text-red-600"
                 >
-                  <LogOut className="mr-2 h-4 w-4 text-red-600" />
+                  <LogOut className="mr-2 size-4 text-red-600" />
                   Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react"
 import { signOut } from "next-auth/react"
 
-export function LogoutPage() {
+export default function LogoutPage() {
   const logoutComplete = useRef<boolean>(false)
   useEffect(() => {
     if (logoutComplete.current) {

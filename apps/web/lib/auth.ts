@@ -1,6 +1,4 @@
 // API client for auth-related backend calls
-import { User } from "@/types/user.types"
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
 export async function signupUser(email: string, password: string) {

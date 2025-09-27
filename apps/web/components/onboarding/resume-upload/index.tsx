@@ -202,7 +202,7 @@ export default function ResumeUpload() {
                       ) : (
                         "Continue"
                       )}
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <ArrowRight className="ml-2 size-4" />
                     </Button>
                   </div>
                 )}

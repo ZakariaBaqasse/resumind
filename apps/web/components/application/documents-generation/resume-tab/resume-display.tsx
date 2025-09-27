@@ -406,7 +406,7 @@ const ResumeDisplay = memo(({ resume }: ResumeDisplayProps) => {
                       document.body.removeChild(link)
                     }}
                   >
-                    <Download className="mr-2 h-4 w-4" />
+                    <Download className="mr-2 size-4" />
                     Download PDF
                   </Button>
                 </div>

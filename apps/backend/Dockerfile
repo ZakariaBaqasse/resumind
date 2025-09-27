@@ -6,12 +6,12 @@ WORKDIR /app
 
 # Copy only dependency manifests first for better layer caching
 COPY pyproject.toml uv.lock ./
-RUN --mount=type=cache, id=fastapi-cache, target=/root/.cache/uv,id=uv-cache \
+RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
     uv sync --locked --no-install-project --no-dev
 
 # Copy the rest of the app
 COPY . .
-RUN --mount=type=cache, id=fastapi-cache, target=/root/.cache/uv,id=uv-cache \
+RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
     uv sync --locked --no-dev
 
 # Runtime

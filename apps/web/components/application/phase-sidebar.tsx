@@ -150,7 +150,7 @@ export function PhaseSidebar({
     ] as Phase[]
   }, [snapshot, events])
 
-  const prevPhasesRef = useRef<Phase[]>()
+  const prevPhasesRef = useRef<Phase[]>([])
 
   useEffect(() => {
     if (!autoAdvance || !prevPhasesRef.current) {

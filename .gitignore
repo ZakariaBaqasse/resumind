@@ -43,3 +43,4 @@ yarn-error.log*
 *.pem
 
 ./backend/uploads
+*/cdk.out/*

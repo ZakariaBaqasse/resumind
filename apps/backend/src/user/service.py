@@ -112,10 +112,21 @@ class UserService:
             model = ChatMistralAI(
                 model=MODEL_NAME, callbacks=[langfuse_handler]
             ).with_structured_output(schema=Resume)
+
+            # Add more specific instruction in the user message
+            user_message = f"""Please extract information from this resume and ensure:
+                            1. Group all responsibilities under each unique job position
+                            2. Do not create duplicate entries for the same job title 
+                               and date range
+                            3. Include complete descriptions without truncation
+
+                            Resume content:
+                            {resume_content}"""
+
             response = await model.ainvoke(
                 [
                     ("system", extract_resume_content_system_prompt),
-                    ("user", f"here is the resume:{resume_content}"),
+                    ("user", user_message),
                 ]
             )
             logger.info(f"Extracted resume content for user {user.id}, {response}")

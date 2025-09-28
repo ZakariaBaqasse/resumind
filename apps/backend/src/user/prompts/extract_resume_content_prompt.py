@@ -13,14 +13,16 @@ Please extract and organize the following information from the resume:
    - If not explicitly stated, identify any introductory professional description
 
 3. WORK EXPERIENCE:
-   - For each position, extract:
+   - GROUP all responsibilities/achievements under each unique position
+   - For each UNIQUE job position, extract:
      - Job title
      - Company name
      - Employment dates (start and end)
      - Location (if mentioned)
-     - Job description/responsibilities (bullet points or paragraphs)
-     - Key achievements and quantifiable results
+     - ALL job descriptions/responsibilities as a single combined text or array
+     - ALL key achievements and quantifiable results
      - Technologies, tools, or skills used in the role
+   - IMPORTANT: Do NOT create separate entries for each bullet point - combine all responsibilities for the same job title, company, and date range into ONE work experience entry
 
 4. EDUCATION:
    - Degree type and field of study
@@ -47,6 +49,12 @@ Please extract and organize the following information from the resume:
    - Awards and recognition
    - Professional memberships
    - Any other relevant sections
+
+CRITICAL INSTRUCTIONS:
+- Group multiple bullet points/responsibilities under the SAME job position into ONE work experience entry
+- Combine all responsibilities into a comprehensive description
+- Ensure no duplication of work experience entries
+- Maintain complete and full descriptions without truncation
 
 Format your response as a structured JSON object with clear field names. If any information is not present in the resume, indicate with "Not provided". For dates, maintain the original format used in the resume.
 """

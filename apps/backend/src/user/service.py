@@ -5,14 +5,15 @@ from typing import List, Optional
 from fastapi import HTTPException
 from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_mistralai import ChatMistralAI
+from langfuse.langchain import CallbackHandler
 
+from src.core.constants import MODEL_NAME
 from src.core.types import Resume
 from src.user.model import User
 from src.user.prompts.extract_resume_content_prompt import (
     extract_resume_content_system_prompt,
 )
 from src.user.repository import UserRepository
-from src.core.constants import MODEL_NAME
 
 logger = getLogger(__name__)
 
@@ -107,15 +108,17 @@ class UserService:
             loader = PDFPlumberLoader(save_path)
             docs = loader.load()
             resume_content = "\n\n".join([doc.page_content for doc in docs])
-            model = ChatMistralAI(model=MODEL_NAME).with_structured_output(
-                schema=Resume
-            )
+            langfuse_handler = CallbackHandler()
+            model = ChatMistralAI(
+                model=MODEL_NAME, callbacks=[langfuse_handler]
+            ).with_structured_output(schema=Resume)
             response = await model.ainvoke(
                 [
                     ("system", extract_resume_content_system_prompt),
                     ("user", f"here is the resume:{resume_content}"),
                 ]
             )
+            logger.info(f"Extracted resume content for user {user.id}, {response}")
             user.initial_resume = Resume.model_validate(response).model_dump()
             self.user_repository.update(user)
             return user

@@ -3,13 +3,11 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
-import { useSession } from "next-auth/react"
 
 import { useGetUser } from "@/hooks/dashboard/use-get-user"
 import { OverviewPage } from "@/components/dashboard/overview-page"
 
 export default function Dashboard() {
-  const { data: session } = useSession()
   const router = useRouter()
   const { data: userData, isLoading, error } = useGetUser()
 

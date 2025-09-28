@@ -63,7 +63,7 @@ export function Signup() {
         email: data.email,
         password: data.password,
         redirect: true,
-        callbackUrl: "/dashboard",
+        callbackUrl: "/onboarding",
       })
     } catch (err: any) {
       // Parse error message if it's in JSON format

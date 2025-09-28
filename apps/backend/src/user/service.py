@@ -103,7 +103,7 @@ class UserService:
             logger.error(message)
             raise HTTPException(status_code=500, detail=message)
 
-    async def extract_initial_resume(self, save_path: str, user: User) -> None:
+    async def extract_initial_resume(self, save_path: str, user_id: str) -> None:
         try:
             loader = PDFPlumberLoader(save_path)
             docs = loader.load()
@@ -133,7 +133,15 @@ class UserService:
                     ("user", user_message),
                 ]
             )
-            logger.info(f"Extracted resume content for user {user.id}")
+            logger.info(f"Extracted resume content for user {user_id}")
+            if not response:
+                raise HTTPException(
+                    status_code=500, detail="Failed to extract resume content"
+                )
+
+            user = self.get_user(user_id)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
 
             # Validate and clean the response before saving
             validated_resume = Resume.model_validate(response)
@@ -143,12 +151,11 @@ class UserService:
 
         except HTTPException as http_exc:
             logger.error(
-                f"HTTP error uploading resume for user {user.id}: {http_exc.detail}"
+                f"HTTP error uploading resume for user {user_id}: {http_exc.detail}"
             )
             raise http_exc
         except Exception as e:
             # Store user_id before potential session issues
-            user_id = user.id if hasattr(user, "id") else "unknown"
             logger.error(f"Error uploading resume for user {user_id}: {e}")
             raise HTTPException(status_code=500, detail="Error uploading resume")
         finally:

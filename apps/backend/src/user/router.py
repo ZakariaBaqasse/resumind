@@ -55,7 +55,7 @@ def upload_resume(
         with open(save_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         background_task.add_task(
-            user_service.extract_initial_resume, save_path, current_user
+            user_service.extract_initial_resume, save_path, current_user.id
         )
         return {
             "status_code": 200,

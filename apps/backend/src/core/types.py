@@ -25,7 +25,9 @@ class PersonalInfo(BaseModel):
     phone_number: str = Field(..., description="The user's phone number.")
     address: str = Field(..., description="The user's address.")
     summary: str = Field(..., description="A brief summary or objective statement.")
-    age: str = Field(None, description="The age if mentioned in the resume")
+    age: str = Field(
+        default="Not provided", description="The age if mentioned in the resume"
+    )
     professional_title: str = Field(
         ...,
         description=(
@@ -46,7 +48,7 @@ class WorkExperience(BaseModel):
     position: str = Field(..., description="Job position or title.")
     start_date: str = Field(..., description="Start date of employment (YYYY-MM-DD).")
     end_date: str = Field(
-        None,
+        default="Present",
         description="End date of employment (YYYY-MM-DD). Optional, null if current.",
     )
     responsibilities: str = Field(
@@ -60,7 +62,7 @@ class Education(BaseModel):
     field_of_study: str = Field(..., description="Field of study.")
     start_date: str = Field(..., description="Start date of education (YYYY-MM-DD).")
     end_date: str = Field(
-        None,
+        default="Present",
         description="End date of education (YYYY-MM-DD). Optional, null if ongoing.",
     )
     grade: str = Field(None, description="Grade or GPA. Optional.")
@@ -69,7 +71,8 @@ class Education(BaseModel):
 class Skill(BaseModel):
     name: str = Field(..., description="Name of the skill.")
     proficiency_level: str = Field(
-        ..., description="Proficiency level (e.g., Beginner, Intermediate, Expert)."
+        default="Not provided",
+        description="Proficiency level (e.g., Beginner, Intermediate, Expert).",
     )
 
 
@@ -86,14 +89,15 @@ class Certification(BaseModel):
     name: str = Field(..., description="Certification name.")
     issuer: str = Field(..., description="Certification issuer.")
     issue_date: str = Field(
-        ..., description="Date the certification was issued (YYYY-MM-DD)."
+        default="Not provided",
+        description="Date the certification was issued (YYYY-MM-DD).",
     )
 
 
 class Language(BaseModel):
     name: str = Field(..., description="Language name.")
     proficiency: str = Field(
-        ...,
+        default="Not provided",
         description="Proficiency level (e.g., Native, Fluent, Intermediate, Basic).",
     )
 
@@ -102,7 +106,8 @@ class Award(BaseModel):
     title: str = Field(..., description="Award title.")
     issuer: str = Field(..., description="Award issuer.")
     date: str = Field(
-        None, description="Date the award was received (YYYY-MM-DD). Optional."
+        default="Not provided",
+        description="Date the award was received (YYYY-MM-DD). Optional.",
     )
     description: str = Field(None, description="Description of the award. Optional.")
 

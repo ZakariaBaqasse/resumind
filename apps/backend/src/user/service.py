@@ -117,8 +117,12 @@ class UserService:
             user_message = f"""Please extract information from this resume and ensure:
                             1. Group all responsibilities under each unique job position
                             2. Do not create duplicate entries for the same job title 
-                               and date range
+                            and date range
                             3. Include complete descriptions without truncation
+                            4. For missing information 
+                            (like grades, end dates for current positions),
+                            use "Not provided" instead of null/None
+                            5. For current positions, use "Present" as the end_date
 
                             Resume content:
                             {resume_content}"""
@@ -129,17 +133,23 @@ class UserService:
                     ("user", user_message),
                 ]
             )
-            logger.info(f"Extracted resume content for user {user.id}, {response}")
-            user.initial_resume = Resume.model_validate(response).model_dump()
+            logger.info(f"Extracted resume content for user {user.id}")
+
+            # Validate and clean the response before saving
+            validated_resume = Resume.model_validate(response)
+            user.initial_resume = validated_resume.model_dump()
             self.user_repository.update(user)
             return user
+
         except HTTPException as http_exc:
             logger.error(
                 f"HTTP error uploading resume for user {user.id}: {http_exc.detail}"
             )
             raise http_exc
         except Exception as e:
-            logger.error(f"Error uploading resume for user {user.id}: {e}")
+            # Store user_id before potential session issues
+            user_id = user.id if hasattr(user, "id") else "unknown"
+            logger.error(f"Error uploading resume for user {user_id}: {e}")
             raise HTTPException(status_code=500, detail="Error uploading resume")
         finally:
             try:

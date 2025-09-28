@@ -16,11 +16,11 @@ export default function Onboarding() {
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           <div className="flex items-center gap-2">
             <Image
-              src="/images/logo.png"
+              src="/logo-full.png"
               alt="Resumind logo"
               className="w-44 h-auto"
-              width={80}
-              height={40}
+              width={800}
+              height={400}
             />
           </div>
           <div className="text-sm text-gray-500">{`Step ${step || "1"} of 2`}</div>

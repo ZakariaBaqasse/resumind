@@ -26,7 +26,6 @@ export default function BaseResume() {
 
   const handleSubmit = async (data: ResumeFormType) => {
     try {
-      console.log("Saving resume:", data)
       await trigger({ resume: data })
       setSaveSuccess(true)
       mutate()

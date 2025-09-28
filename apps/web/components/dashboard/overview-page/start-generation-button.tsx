@@ -50,7 +50,6 @@ export function StartGenerationButton() {
   const { data, isMutating, error, trigger } = useStartGeneration()
   useEffect(() => {
     if (data) {
-      console.log(data)
       router.push(`/applications/${data.id}/view`)
     }
   }, [data])

@@ -39,7 +39,6 @@ export default function CoverLetterGenerationTab() {
   const isError = coverLetterGenerationEvent?.status === "failed"
   const errorMessage = (coverLetterGenerationEvent?.error as any)?.message
 
-  console.log(snapshot)
 
   if (snapshot?.generated_cover_letter && snapshot.generated_resume) {
     return (

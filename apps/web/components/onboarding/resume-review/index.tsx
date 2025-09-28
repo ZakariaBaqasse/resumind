@@ -97,7 +97,6 @@ export default function ResumeReview() {
 
     es.onmessage = (message: MessageEvent) => {
       const data = JSON.parse(message.data)
-      console.log("DATA", data)
 
       if (data.status === "complete") {
         setIsLoading(false)

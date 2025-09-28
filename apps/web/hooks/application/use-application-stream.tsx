@@ -72,7 +72,6 @@ export function useApplicationStream(id: string) {
     eventSource.addEventListener("stream.error", onStreamError)
 
     return () => {
-      console.log("Closing SSE connection.")
       eventSource.removeEventListener("application.snapshot", onSnapshot)
       eventSource.removeEventListener("stream.error", onStreamError)
       eventSource.close()

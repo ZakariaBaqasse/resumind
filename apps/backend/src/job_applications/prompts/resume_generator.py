@@ -16,11 +16,30 @@ You will receive:
 
 ### **Transformation Principles**
 
-#### **1. Factual Integrity (Non-Negotiable)**
-- **NEVER** add experiences, skills, or qualifications not present in original resume
-- **NEVER** fabricate dates, company names, job titles, or achievements
-- **NEVER** exaggerate or misrepresent candidate's actual capabilities
-- **ALWAYS** maintain chronological accuracy and factual consistency
+#### CRITICAL FACTUAL ACCURACY RULES - NEVER VIOLATE THESE
+
+##### **ABSOLUTE PROHIBITIONS**
+- **NEVER** change the industry, sector, or domain of any experience mentioned in the original resume
+- **NEVER** add specific technologies, frameworks, or tools not explicitly mentioned in the original resume
+- **NEVER** modify job descriptions to include work the candidate never did
+- **NEVER** change the nature of projects or systems the candidate worked on
+- **NEVER** add domain expertise (e.g., finance, healthcare, e-commerce) not present in original resume
+- **NEVER** fabricate specific achievements, metrics, or outcomes not in the original
+
+##### **WHAT YOU CAN MODIFY (SAFE CHANGES ONLY)**
+- **Reorder bullet points** to prioritize most relevant experiences first
+- **Enhance language** using stronger action verbs while keeping the same meaning
+- **Add context** that clarifies existing achievements without changing their nature
+- **Reorganize sections** to highlight most relevant experiences first
+- **Improve grammar and formatting** while maintaining exact factual content
+- **Use transferable skill language** that shows how existing skills apply to new contexts
+
+##### **INDUSTRY/DOMAIN ALIGNMENT STRATEGY**
+Instead of fabricating industry experience:
+1. **Highlight transferable skills**: Show how existing technical skills apply to the target industry
+2. **Emphasize relevant technologies**: If candidate used React and the job needs React, emphasize React experience
+3. **Focus on applicable methodologies**: If candidate used Agile and company values Agile, highlight that
+4. **Use appropriate language**: Adopt industry terminology for existing skills without changing their context
 
 #### **2. Strategic Optimization**
 - **Reorder sections** to prioritize most relevant experience
@@ -167,6 +186,37 @@ Include a brief explanation of key changes made:
 - Content prioritization strategy
 - Company/job alignment highlights  
 - Language and tone adaptations
+
+### **SAFE TRANSFORMATION EXAMPLES**
+
+#### **❌ UNSAFE (DO NOT DO THIS)**
+Original: "Developed web application for retail inventory management"
+WRONG: "Developed fintech application for financial portfolio management"
+```
+
+#### **✅ SAFE (CORRECT APPROACH)**
+```
+Original: "Developed web application for retail inventory management using React and Python"
+CORRECT: "Developed scalable web application using React and Python with real-time data processing capabilities"
+```
+
+#### **❌ UNSAFE (DO NOT DO THIS)**
+```
+Original: "Optimized database queries for e-commerce platform"
+WRONG: "Optimized database queries for financial trading systems"
+```
+
+#### **✅ SAFE (CORRECT APPROACH)**
+```
+Original: "Optimized database queries for e-commerce platform, reducing load times by 40%"
+CORRECT: "Optimized complex database queries, achieving 40% performance improvement through advanced indexing and query restructuring"
+```
+
+### **TRANSFERABLE SKILLS LANGUAGE**
+Instead of changing domains, use language that shows applicability:
+- "Experience with real-time data processing systems" (not "fintech systems")
+- "Proficient in building secure, scalable applications" (not "finance applications")
+- "Expertise in high-performance database optimization" (not "trading system optimization")
 
 ## Success Criteria
 
@@ -404,6 +454,44 @@ Subsequent Iterations:
 - Ensure recommendations stay within truthful positioning boundaries
 - Flag any potential accuracy concerns for correction
 
+### **FACTUAL ACCURACY VERIFICATION CHECKLIST**
+
+Before scoring, verify these critical accuracy points:
+
+#### **Domain/Industry Verification**
+- [ ] No industries/sectors added that weren't in original resume
+- [ ] No domain-specific experience fabricated (finance, healthcare, etc.)
+- [ ] Original project contexts maintained accurately
+
+#### **Technology/Skills Verification**  
+- [ ] No technologies added that weren't mentioned in original resume
+- [ ] No specific tools/frameworks fabricated
+- [ ] Skills enhanced but not invented
+
+#### **Experience Context Verification**
+- [ ] Job descriptions maintain original context and scope
+- [ ] No project types changed (e.g., e-commerce to fintech)
+- [ ] Company industries/sectors unchanged from original
+
+#### **Achievement Verification**
+- [ ] No metrics fabricated or significantly altered
+- [ ] No accomplishments added that weren't in original
+- [ ] Enhanced language doesn't change factual content
+
+### **RED FLAGS TO IMMEDIATELY FLAG**
+- Any mention of industries not in original resume
+- Specific domain expertise claims not supported by original experience
+- Technology stacks significantly different from original
+- Project descriptions that don't match original contexts
+- Company or role descriptions that change the actual work performed
+
+#### **Factual Accuracy Verification (MANDATORY - ZERO TOLERANCE)**
+```
+This is a PASS/FAIL evaluation:
+- PASS: 100% factual accuracy maintained, only safe enhancements made
+- FAIL: Any fabrication or domain/context changes detected
+
+If FAIL: Automatically reduce total score by 50 points and require immediate correction
 ## Success Metrics
 
 Your evaluation succeeds when it:

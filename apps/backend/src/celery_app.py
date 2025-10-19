@@ -1,13 +1,14 @@
-import os
-import logging
 import json
+import logging
+import os
+
 from celery import Celery
 from celery.signals import (
     task_failure,
 )
-import src.user.model
-import src.job_applications.model
 
+import src.job_applications.model
+import src.user.model
 
 logger = logging.getLogger(__name__)
 
@@ -105,12 +106,12 @@ app.conf.update(
     # Fix upcoming deprecation warning
     broker_connection_retry_on_startup=True,
     # Enable events for better Flower integration
-    worker_send_task_events=True,
-    task_send_sent_event=True,
-    result_extended=True,
+    worker_send_task_events=False,
+    task_send_sent_event=False,
+    result_extended=False,
     # Add task routing
     # Concurrency & lifecycle
-    worker_concurrency=_to_int("CELERY_CONCURRENCY", 4),
+    worker_concurrency=_to_int("CELERY_CONCURRENCY", 1),
     worker_prefetch_multiplier=1,
     task_acks_late=True,
     # Recycle workers to avoid gradual memory growth from async libs

@@ -1,24 +1,8 @@
 import asyncio
-import os
 import logging
-import psycopg
-from uuid import uuid4
+import os
 
-
-import anyio
-from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-from langchain_core.runnables import RunnableConfig
-from langfuse.langchain import CallbackHandler
-
-from src.core.rate_limit_handlers import RateLimiter
-from src.core.service_registry import ServiceRegistry
-from src.configs.database_config import get_session_context
-from src.job_applications.agents.company_profiler_agents.company_profiler import (
-    CompanyProfilerAgent,
-    CompanyProfilerState,
-)
 from src.celery_app import app
-from src.job_applications.agents.main_graph import MainGraphAgent, MainGraphState
 
 # Initialize structured logger
 logger = logging.getLogger(__name__)
@@ -49,6 +33,16 @@ async def start_resume_generation_async(
     """
     Given a job application id, start the resume generation.
     """
+    import psycopg
+    from langchain_core.runnables import RunnableConfig
+    from langfuse.langchain import CallbackHandler
+    from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+
+    from src.configs.database_config import get_session_context
+    from src.core.rate_limit_handlers import RateLimiter
+    from src.core.service_registry import ServiceRegistry
+    from src.job_applications.agents.main_graph import MainGraphAgent, MainGraphState
+
     try:
         async with await psycopg.AsyncConnection.connect(db_url) as conn:
             await conn.set_autocommit(True)

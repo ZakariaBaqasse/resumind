@@ -1,14 +1,10 @@
-import os
-from typing import List, Dict
 import logging
-from pydantic import BaseModel
+import os
+from typing import Dict, List
 
-from langchain_tavily import TavilySearch
 from langchain_core.tools import tool
-from langchain_community.document_loaders.firecrawl import FireCrawlLoader
-from firecrawl import FirecrawlApp
-from langchain_mistralai import ChatMistralAI
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_tavily import TavilySearch
+from pydantic import BaseModel
 
 from src.core.constants import MODEL_NAME
 from src.job_applications.prompts.company_profiler import (
@@ -80,6 +76,10 @@ async def scraping_tool(url: str, data_to_extract: List[str]):
         str: A concise summary of the web page content, with the requested
              data points highlighted and extracted.
     """
+    from firecrawl import FirecrawlApp
+    from langchain_core.messages import HumanMessage, SystemMessage
+    from langchain_mistralai import ChatMistralAI
+
     try:
         firecrawl_app = FirecrawlApp()
         scrape_result = firecrawl_app.scrape_url(url, formats=["markdown"])

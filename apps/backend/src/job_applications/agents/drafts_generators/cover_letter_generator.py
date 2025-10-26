@@ -7,6 +7,7 @@ from langchain_core.messages import (
     SystemMessage,
 )
 from langchain_core.runnables import RunnableConfig
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_mistralai import ChatMistralAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
@@ -15,13 +16,13 @@ from langgraph.types import Command
 from pydantic import BaseModel
 
 from src.configs.database_config import get_session_context
-from src.core.constants import MODEL_NAME, STRUCTURED_OUTPUT_MAX_RETRY
+from src.core.constants import GEMINI_MODEL_NAME, STRUCTURED_OUTPUT_MAX_RETRY
 from src.core.rate_limit_handlers import RateLimiter, retry_with_backoff
 from src.core.service_registry import ServiceRegistry
 from src.core.types import Resume
 from src.job_applications.prompts.cover_letter_generator import (
-    cover_letter_generator_system_prompt,
     cover_letter_evaluator_system_prompt,
+    cover_letter_generator_system_prompt,
 )
 from src.job_applications.types import (
     CoverLetterResponse,
@@ -55,9 +56,9 @@ class CoverLetterGeneratorAgent:
         debug: bool = False,
         rate_limiter=None,
     ) -> None:
-        self.model = model or ChatMistralAI(model=MODEL_NAME, max_tokens=8192)
+        self.model = ChatGoogleGenerativeAI(model=GEMINI_MODEL_NAME)
         self.debug = debug
-        self.rate_limiter = rate_limiter or RateLimiter(1.0)
+        self.rate_limiter = RateLimiter(0.5)
 
     def build_graph(self, checkpointer=InMemorySaver()) -> CompiledStateGraph:
         """
@@ -130,7 +131,7 @@ class CoverLetterGeneratorAgent:
                     job_application_id=state.job_application_id,
                     step=PipelineStep.COVER_LETTER_DRAFTING,
                     status=EventStatus.SUCCEEDED,
-                    message=f"Generated an enhanced version of the cover letter",
+                    message="Generated an enhanced version of the cover letter",
                     data={
                         "iteration": state.current_evaluation,
                         "max_iterations": state.max_evaluations,
@@ -221,7 +222,7 @@ class CoverLetterGeneratorAgent:
                     job_application_id=state.job_application_id,
                     step=PipelineStep.COVER_LETTER_EVALUATION,
                     status=EventStatus.SUCCEEDED,
-                    message=f"Suggested improvements to enhance the generated cover letter",
+                    message="Suggested improvements to enhance the generated cover letter",
                     data={
                         "iteration": state.current_evaluation,
                         "evaluation_summary": response.summary,

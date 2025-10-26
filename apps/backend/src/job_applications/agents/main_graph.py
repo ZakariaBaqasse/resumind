@@ -1,26 +1,24 @@
 import logging
-from typing import Optional, Dict, Any
-from langchain_mistralai import ChatMistralAI
-from pydantic import BaseModel
-from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.graph import START, END, StateGraph
-from langgraph.graph.state import CompiledStateGraph
+from typing import Any, Dict, Optional
 
+from langchain_mistralai import ChatMistralAI
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
+from pydantic import BaseModel
 
 from src.core.constants import MODEL_NAME
+from src.core.rate_limit_handlers import RateLimiter
+from src.core.types import Resume
 from src.job_applications.agents.company_profiler_agents.company_profiler import (
     CompanyProfilerAgent,
 )
-
-from src.core.types import Resume
-from src.core.rate_limit_handlers import RateLimiter
 from src.job_applications.agents.drafts_generators.cover_letter_generator import (
     CoverLetterGeneratorAgent,
 )
 from src.job_applications.agents.drafts_generators.resume_generator import (
     ResumeGeneratorAgent,
 )
-from src.job_applications.prompts import cover_letter_generator
 
 logger = logging.getLogger(__name__)
 

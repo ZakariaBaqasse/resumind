@@ -1,7 +1,11 @@
-from typing import Optional, List, Dict, Any
+import ast
+import json
+import re
 from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class ResumeGenerationStatus(Enum):
@@ -225,6 +229,61 @@ class GeneratedResumeEvaluation(BaseModel):
         ),
     )
 
+    @field_validator("grade", mode="before")
+    def _coerce_grade(cls, v):
+        if isinstance(v, str):
+            # Extract first integer-like token, clamp to [0, 100] if needed
+            m = re.search(r"\d{1,3}", v)
+            if m:
+                n = int(m.group(0))
+                return max(0, min(100, n))
+        return v
+
+    @field_validator("changes", mode="before")
+    def _parse_changes(cls, v):
+        # If already a dict, ensure all values are strings
+        if isinstance(v, dict):
+            return {
+                str(k): (val if isinstance(val, str) else json.dumps(val))
+                for k, val in v.items()
+            }
+
+        # If it's a string, try to parse JSON (handle code fences)
+        if isinstance(v, str):
+            s = v.strip()
+
+            # Strip ```json ... ``` fences if present
+            if s.startswith("```"):
+                s = re.sub(r"^```(?:json|JSON)?\s*", "", s).strip()
+                s = re.sub(r"\s*```$", "", s).strip()
+
+            # Try JSON first
+            try:
+                parsed = json.loads(s)
+                if isinstance(parsed, dict):
+                    return {
+                        str(k): (val if isinstance(val, str) else json.dumps(val))
+                        for k, val in parsed.items()
+                    }
+            except Exception:
+                pass
+
+            # Try Python literal dict (sometimes models return single quotes)
+            try:
+                parsed = ast.literal_eval(s)
+                if isinstance(parsed, dict):
+                    return {
+                        str(k): (val if isinstance(val, str) else json.dumps(val))
+                        for k, val in parsed.items()
+                    }
+            except Exception:
+                pass
+
+            # Fallback: put the entire text under a generic key to avoid hard failure
+            return {"overall_structure": s}
+
+        return v
+
 
 class GeneratedCoverLetterEvaluation(BaseModel):
     grade: int = Field(
@@ -248,6 +307,42 @@ class GeneratedCoverLetterEvaluation(BaseModel):
             "and overall fit for the target job. This should provide actionable feedback and context for the assigned grade."
         ),
     )
+
+    @field_validator("grade", mode="before")
+    def _coerce_grade(cls, v):
+        if isinstance(v, str):
+            m = re.search(r"\d{1,3}", v)
+            if m:
+                n = int(m.group(0))
+                return max(0, min(100, n))
+        return v
+
+    @field_validator("changes", mode="before")
+    def _parse_changes(cls, v):
+        if isinstance(v, list):
+            return [item if isinstance(item, str) else json.dumps(item) for item in v]
+
+        if isinstance(v, str):
+            s = v.strip()
+            if s.startswith("```"):
+                s = re.sub(r"^```(?:json|JSON)?\s*", "", s).strip()
+                s = re.sub(r"\s*```$", "", s).strip()
+
+            # Try parse JSON array
+            try:
+                parsed = json.loads(s)
+                if isinstance(parsed, list):
+                    return [
+                        item if isinstance(item, str) else json.dumps(item)
+                        for item in parsed
+                    ]
+            except Exception:
+                pass
+
+            # Fallback: wrap as a single-item list
+            return [s]
+
+        return v
 
 
 class CoverLetterResponse(BaseModel):

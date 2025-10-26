@@ -56,6 +56,7 @@ services:
       - CELERY_TASK_SERIALIZER=${CELERY_TASK_SERIALIZER:-json}
       - CELERY_TASK_IGNORE_RESULT=${CELERY_TASK_IGNORE_RESULT:-true}
       - PYTHONPATH=/app
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
     restart: unless-stopped
     volumes:
       - ../../apps/backend/src:/app/src
@@ -73,7 +74,7 @@ services:
       redis:
         condition: service_healthy
     environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql://root:password@postgres:5432/thinkable-prototype}
+      - DATABASE_URL=${DATABASE_URL:-}
       - CELERY_BROKER_URL=redis://default:myredissecret@redis:6379
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
@@ -88,6 +89,9 @@ services:
       - CELERY_TASK_SERIALIZER=${CELERY_TASK_SERIALIZER:-json}
       - CELERY_TASK_IGNORE_RESULT=${CELERY_TASK_IGNORE_RESULT:-true}
       - PYTHONPATH=/app
+      - FRONTEND_URL=http://localhost:3000
+      - JWT_SECRET=CalfXE/2rxGXREX+MoA2NF9p+EQ9tQ+JsV6zXd4Y5tA=
+      - JWT_ALGORITHM=HS256
     restart: unless-stopped
     ports:
       - "8000:8000"

@@ -4,7 +4,6 @@ import type React from "react"
 import { useState } from "react"
 import { useApplicationStore } from "@/store/job-application-store"
 
-import { ActivitySidebar } from "./activity-sidebar"
 import CompanyResearchTab from "./company-research"
 import CoverLetterGenerationTab from "./documents-generation/cover-letter-tab"
 import ResumeGenerationTab from "./documents-generation/resume-tab"

@@ -97,8 +97,6 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_ALGORITHM=HS256
     restart: unless-stopped
-    ports:
-      - "8000:8000"
     command: "uvicorn src.main:app --host 0.0.0.0 --port 8000"
     shm_size: 2gb
     networks:
@@ -129,8 +127,6 @@ services:
       dockerfile: ./Dockerfile.web
       args:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
-    ports:
-      - "3000:3000"
     environment:
       - AUTH_SECRET=${AUTH_SECRET}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}

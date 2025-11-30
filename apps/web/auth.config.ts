@@ -61,7 +61,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const backendUrl = new URL(process.env.NEXT_PUBLIC_API_URL!)
+          const backendUrl = new URL(process.env.AUTH_API_URL!)
           backendUrl.pathname = "/auth/credentials-login"
           // Call your backend API
           const response = await fetch(backendUrl.toString(), {
@@ -103,7 +103,7 @@ export const authOptions: NextAuthOptions = {
       // Handle Google provider
       if (account?.provider === "google") {
         try {
-          const backendUrl = new URL(process.env.NEXT_PUBLIC_API_URL!)
+          const backendUrl = new URL(process.env.AUTH_API_URL!)
           backendUrl.pathname = "/auth/google-signin"
           const response = await fetch(backendUrl.toString(), {
             method: "POST",

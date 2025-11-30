@@ -15,6 +15,9 @@ services:
       POSTGRES_DB: ${DB_NAME:-app}
     ports:
       - "${DB_PORT:-54322}:5432"
+    networks:
+      - resumind-network
+
   redis:
     image: redis:7
     restart: always
@@ -23,15 +26,17 @@ services:
     ports:
       - 6379:6379
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "myredissecret", "ping"]
       interval: 3s
       timeout: 10s
       retries: 10
+    networks:
+      - resumind-network
 
   # Celery worker
   celery-worker:
     build:
-      context: ../../apps/backend
+      context: ./apps/backend
       dockerfile: ./Dockerfile.celery
     depends_on:
       postgres:
@@ -57,21 +62,32 @@ services:
       - PYTHONPATH=/app
       - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
     restart: unless-stopped
-    volumes:
-      - ../../apps/backend/src:/app/src
-      - ../../logs:/app/logs
     command: celery -A src.celery_app worker -E -l INFO -Q generate_resume -O fair --concurrency=8
     shm_size: 2gb
+    networks:
+      - resumind-network
 
   backend-server:
     build:
-      context: ../../apps/backend
+      context: ./apps/backend
       dockerfile: ./Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     environment:
       - DATABASE_URL=${DATABASE_URL:-}
       - CELERY_BROKER_URL=redis://default:myredissecret@redis:6379
@@ -94,15 +110,14 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
-    volumes:
-      - ../../apps/backend/src:/app/src
-      - ../../logs:/app/logs
     command: "uvicorn src.main:app --host 0.0.0.0 --port 8000"
     shm_size: 2gb
+    networks:
+      - resumind-network
 
   flower:
     build:
-      context: ../../apps/backend
+      context: ./apps/backend
       dockerfile: ./Dockerfile.celery
     command: celery -A src.celery_app flower --address=0.0.0.0
     ports:
@@ -113,5 +128,32 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    networks:
+      - resumind-network
+
+  web:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.web
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    environment:
+      - AUTH_SECRET=${AUTH_SECRET:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - AUTH_API_URL=http://backend-server:8000
+    depends_on:
+      backend-server:
+        condition: service_healthy
+    networks:
+      - resumind-network
+
+networks:
+  resumind-network:
+    driver: bridge
+
 volumes:
   resumind-postgres-data:

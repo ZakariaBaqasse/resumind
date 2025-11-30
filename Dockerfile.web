@@ -1,0 +1,47 @@
+# Stage 1: Base image and Turborepo setup
+FROM node:20-alpine AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN apk add --no-cache libc6-compat && \
+    corepack enable && \
+    pnpm install turbo --global
+
+# Stage 2: Prune dependencies for the target Next.js app
+FROM base AS builder
+WORKDIR /app
+COPY . .
+RUN turbo prune web --docker
+
+# Stage 3: Install production dependencies
+FROM base AS installer
+WORKDIR /app
+COPY .gitignore .gitignore
+COPY --from=builder /app/out/json/ .
+COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
+RUN pnpm install --frozen-lockfile
+
+# Stage 4: Build the Next.js application
+FROM installer AS build_app
+WORKDIR /app
+
+# Build arguments for NEXT_PUBLIC_* variables
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+COPY --from=builder /app/out/full/ .
+COPY turbo.json turbo.json
+RUN turbo run build --filter=web...
+
+# Stage 5: Runner stage for the production application
+FROM base AS runner
+WORKDIR /app
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+USER nextjs
+COPY --from=build_app /app/apps/web/.next/standalone ./
+COPY --from=build_app /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=build_app /app/apps/web/public ./apps/web/public
+ENV PORT 3000
+EXPOSE 3000
+CMD ["node", "apps/web/server.js"]

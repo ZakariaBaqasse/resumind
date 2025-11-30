@@ -35,7 +35,7 @@ app.include_router(user_router)
 app.include_router(job_application_router)
 
 
-@app.get("/status")
+@app.get("/health", tags=["Health"])
 def status_check() -> dict[str, str]:
     """A basic function to perform a status check on the API."""
 

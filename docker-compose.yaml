@@ -10,11 +10,9 @@ services:
     volumes:
       - resumind-postgres-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password123}
       POSTGRES_USER: ${DB_USER:-root}
-      POSTGRES_DB: ${DB_NAME:-app}
-    ports:
-      - "${DB_PORT:-54322}:5432"
+      POSTGRES_DB: ${DB_NAME:-resumind}
     networks:
       - resumind-network
 
@@ -23,17 +21,14 @@ services:
     restart: always
     command: >
       --requirepass ${REDIS_AUTH:-myredissecret}
-    ports:
-      - 6379:6379
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "myredissecret", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_AUTH:-myredissecret}", "ping"]
       interval: 3s
       timeout: 10s
       retries: 10
     networks:
       - resumind-network
 
-  # Celery worker
   celery-worker:
     build:
       context: ./apps/backend
@@ -44,12 +39,11 @@ services:
       redis:
         condition: service_healthy
     environment:
-      - DATABASE_URL=${CELERY_DATABASE_URL:-postgresql://root:password@postgres:5432/thinkable-prototype}
-      - CELERY_BROKER_URL=redis://default:myredissecret@redis:6379
+      - DATABASE_URL=postgresql://${DB_USER:-root}:${DB_PASSWORD:-password123}@postgres:5432/${DB_NAME:-resumind}
+      - CELERY_BROKER_URL=redis://default:${REDIS_AUTH:-myredissecret}@redis:6379
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONIOENCODING=utf-8
-      # OpenAI
       - TAVILY_API_KEY=${TAVILY_API_KEY:-}
       - MISTRAL_API_KEY=${MISTRAL_API_KEY:-}
       - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY:-}
@@ -57,8 +51,6 @@ services:
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
       - CELERY_WORKER_NAME=celery
-      - CELERY_TASK_SERIALIZER=${CELERY_TASK_SERIALIZER:-json}
-      - CELERY_TASK_IGNORE_RESULT=${CELERY_TASK_IGNORE_RESULT:-true}
       - PYTHONPATH=/app
       - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
     restart: unless-stopped
@@ -89,8 +81,8 @@ services:
       retries: 10
       start_period: 10s
     environment:
-      - DATABASE_URL=${DATABASE_URL:-}
-      - CELERY_BROKER_URL=redis://default:myredissecret@redis:6379
+      - DATABASE_URL=postgresql://${DB_USER:-root}:${DB_PASSWORD:-password123}@postgres:5432/${DB_NAME:-resumind}
+      - CELERY_BROKER_URL=redis://default:${REDIS_AUTH:-myredissecret}@redis:6379
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONIOENCODING=utf-8
@@ -100,12 +92,9 @@ services:
       - LANGFUSE_HOST=${LANGFUSE_HOST:-}
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY:-}
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY:-}
-      - CELERY_WORKER_NAME=celery
-      - CELERY_TASK_SERIALIZER=${CELERY_TASK_SERIALIZER:-json}
-      - CELERY_TASK_IGNORE_RESULT=${CELERY_TASK_IGNORE_RESULT:-true}
       - PYTHONPATH=/app
-      - FRONTEND_URL=http://localhost:3000
-      - JWT_SECRET=CalfXE/2rxGXREX+MoA2NF9p+EQ9tQ+JsV6zXd4Y5tA=
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - JWT_SECRET=${JWT_SECRET}
       - JWT_ALGORITHM=HS256
     restart: unless-stopped
     ports:
@@ -114,6 +103,9 @@ services:
     shm_size: 2gb
     networks:
       - resumind-network
+    labels:
+      - "coolify.managed=true"
+      - "coolify.proxy=true"
 
   flower:
     build:
@@ -123,8 +115,8 @@ services:
     ports:
       - "5555:5555"
     environment:
-      - CELERY_BROKER_URL=redis://default:myredissecret@redis:6379
-      - DATABASE_URL=${DATABASE_URL:-postgresql://root:password@postgres:5432/thinkable-prototype}
+      - CELERY_BROKER_URL=redis://default:${REDIS_AUTH:-myredissecret}@redis:6379
+      - DATABASE_URL=postgresql://${DB_USER:-root}:${DB_PASSWORD:-password123}@postgres:5432/${DB_NAME:-resumind}
     depends_on:
       redis:
         condition: service_healthy
@@ -136,13 +128,13 @@ services:
       context: .
       dockerfile: ./Dockerfile.web
       args:
-        - NEXT_PUBLIC_API_URL=http://localhost:8000
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     ports:
       - "3000:3000"
     environment:
-      - AUTH_SECRET=${AUTH_SECRET:-}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - AUTH_SECRET=${AUTH_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
       - AUTH_API_URL=http://backend-server:8000
     depends_on:
@@ -150,6 +142,9 @@ services:
         condition: service_healthy
     networks:
       - resumind-network
+    labels:
+      - "coolify.managed=true"
+      - "coolify.proxy=true"
 
 networks:
   resumind-network:

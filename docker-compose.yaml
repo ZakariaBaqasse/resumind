@@ -101,9 +101,8 @@ services:
     shm_size: 2gb
     networks:
       - resumind-network
-    labels:
-      - "coolify.managed=true"
-      - "coolify.proxy=true"
+    ports:
+      - "8000:8000"
 
   flower:
     build:
@@ -138,9 +137,8 @@ services:
         condition: service_healthy
     networks:
       - resumind-network
-    labels:
-      - "coolify.managed=true"
-      - "coolify.proxy=true"
+    ports:
+      - "3001:3000"
 
 networks:
   resumind-network:

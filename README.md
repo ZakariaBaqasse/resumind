@@ -1,160 +1,185 @@
-# Modern Full-Stack Monorepo Template
+# Resumind
 
-A comprehensive monorepo template for building full-stack applications with TypeScript, React, Next.js, Python, and PostgreSQL with pgvector. Powered by Turborepo and pnpm for efficient workspace management.
+Resumind is an advanced, AI-powered resume builder and analyzer designed to help users craft professional, ATS-friendly resumes. It leverages modern web technologies and powerful LLMs to provide intelligent feedback, content generation, and resume optimization.
 
-## Project Structure
+## 🚀 Tech Stack
 
-## Using this example
+### Frontend (`apps/web`)
 
-monorepo-template/
+- **Framework:** [Next.js 15](https://nextjs.org/) (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS, Radix UI, Framer Motion
+- **State Management:** Zustand
+- **Authentication:** NextAuth.js
+- **PDF Generation:** @react-pdf/renderer
+
+### Backend (`apps/backend`)
+
+- **Framework:** [FastAPI](https://fastapi.tiangolo.com/)
+- **Language:** Python 3.12+
+- **Package Manager:** [uv](https://github.com/astral-sh/uv)
+- **Database ORM:** SQLModel (SQLAlchemy)
+- **Migrations:** Alembic
+- **AI/LLM:** LangChain, LangGraph, Google GenAI (Gemini), Mistral AI
+- **Observability:** Langfuse
+- **Background Tasks:** Celery with Redis
+- **Tools:** Tavily (Search), Firecrawl (Web Scraping)
+
+### Infrastructure
+
+- **Monorepo:** Turborepo
+- **Package Manager:** pnpm
+- **Database:** PostgreSQL 16 (with `pgvector` for embeddings)
+- **Caching/Queue:** Redis 7
+- **Deployment:** Docker Compose, Dokploy
+
+---
+
+## 📂 Project Structure
+
+```bash
+.
 ├── apps/
-│ ├── backend/ # Python backend service
-│ └── web/ # Next.js frontend application
+│   ├── backend/        # FastAPI application (AI logic, API, Workers)
+│   └── web/            # Next.js frontend (UI, Auth, PDF rendering)
 ├── packages/
-│ ├── eslint-config/ # Shared ESLint configurations
-│ ├── infrastructure/ # Docker-based infrastructure (PostgreSQL, Redis)
-│ ├── typescript-config/ # Shared TypeScript configurations
-│ └── ui/ # Shared React component library
-├── .env.example # Example environment variables
-├── turbo.json # Turborepo configuration
-└── package.json # Root workspace configuration
+│   ├── infrastructure/ # Docker Compose for local DB/Redis
+│   └── ui/             # Shared UI components
+├── docker-compose.yaml # Production/Staging deployment config
+└── turbo.json          # Turborepo pipeline config
+```
 
-## Technologies
+---
 
-- **Monorepo Management**
-
-  - Turborepo for task orchestration
-  - pnpm for package management
-
-- **Frontend**
-
-  - Next.js
-  - React
-  - TypeScript
-  - Tailwind CSS
-
-- **Backend**
-
-  - Python
-  - FastAPI
-
-- **Infrastructure**
-  - PostgreSQL with pgvector extension for vector embeddings
-  - Redis for caching
-  - Docker and Docker Compose
-
-## Getting Started
+## 🛠️ Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- pnpm 10+
-- Python 3.11+
-- Docker and Docker Compose
+- **Node.js** 18+
+- **pnpm** 10+
+- **Python** 3.12+
+- **uv** (Python package manager) -> `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- **Docker** & **Docker Compose**
 
-### Initial Setup
+### 1. Clone the Repository
 
-1. Clone the repository:
+```bash
+git clone https://github.com/ZakariaBaqasse/resumind.git
+cd resumind
+```
 
-   ```bash
-   git clone https://github.com/yourusername/monorepo-template.git
-   cd monorepo-template
-   ```
+### 2. Install Dependencies
 
-2. Install dependencies:
+**Frontend & Shared Packages:**
 
-   ```bash
-   pnpm install
-   ```
+```bash
+pnpm install
+```
 
-3. Set up environment variables:
+**Backend:**
 
-   ```bash
-   cp .env.example .envrc
-   # Edit .env with your project-specific values
-   ```
+```bash
+cd apps/backend
+uv sync
+cd ../..
+```
 
-4. Use [direnv](https://direnv.net/) (MacOS & Linux) or `source` (Windows) to sync env variables:
-   ```bash
-   direnv allow
-   ```
-   or
-   ```bash
-   source .envrc
-   ```
+### 3. Environment Setup
 
-5. Start the development environment:
-   ```bash
-   pnpm dev
+Copy the example environment file and configure it:
 
-This will:
+```bash
+cp .env.example .envrc
+# Or manually create .envrc / .env based on .env.example
+```
 
-- Start the infrastructure services (PostgreSQL, Redis)
-- Start the web application on http://localhost:3000
-- Start the backend service
+> **Note:** This project uses `direnv` to manage environment variables. If you have `direnv` installed, run `direnv allow`. Otherwise, ensure your variables are exported in your shell or `.env` files.
 
-## Development Workflow
+**Key Environment Variables:**
 
-### Starting Development Environment
+- `DATABASE_URL`: PostgreSQL connection string
+- `GOOGLE_API_KEY`: For Gemini models
+- `MISTRAL_API_KEY`: For Mistral models
+- `LANGFUSE_*`: For LLM observability
+- `NEXTAUTH_SECRET`: For frontend auth
+
+### 4. Start Local Development
+
+Start the entire stack (Frontend + Backend + DB + Redis):
 
 ```bash
 pnpm dev
 ```
 
-This starts all services in parallel, including Docker infrastructure.
+- **Frontend:** [http://localhost:3000](http://localhost:3000)
+- **Backend API:** [http://localhost:8000](http://localhost:8000)
+- **API Docs:** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Flower (Celery Monitor):** [http://localhost:5555](http://localhost:5555)
 
-### Managing Infrastructure
+### Running Services Individually
+
+**Infrastructure Only (DB & Redis):**
 
 ```bash
-# Start infrastructure only
 pnpm infra:start
-
-# Stop infrastructure
-pnpm infra:stop
 ```
 
-### Working with Specific Apps
+**Backend Only:**
 
 ```bash
-# Run only the web app
-pnpm --filter web dev
-
-# Run only the backend
 pnpm --filter backend dev
 ```
 
-## Infrastructure Details
-
-The infrastructure package provides:
-
-- **PostgreSQL**: Running on port 54321 with pgvector extension for vector similarity search
-
-  - Useful for AI applications, semantic search, or embeddings
-  - Initialize with your own schema by editing `packages/infrastructure/init-db.sql.template`
-
-- **Redis**: Running on port 63790 with password authentication
-  - Useful for caching, session management, and pub/sub messaging
-
-Environment variables control database names, users, and passwords to avoid conflicts between projects.
-
-## Adding New Components
+**Frontend Only:**
 
 ```bash
-# Add a new component to the UI package
-cd packages/ui
-pnpm generate:component
+pnpm --filter web dev
 ```
 
-## Notes for Customization
+---
 
-1. When starting a new project, update the database name in the `.envrc` file
-2. The init-db.sql file is generated from the template on first run
-3. Each project gets its own named volumes to prevent data conflicts
+## 🗄️ Database Migrations
 
-## Contributing
+The backend uses Alembic for database migrations.
 
-Contributions, issues, and feature requests are welcome!
+```bash
+cd apps/backend
 
-## License
+# Create a new migration
+uv run alembic revision --autogenerate -m "Description of changes"
 
-[MIT](LICENSE)
+# Apply migrations
+uv run alembic upgrade head
+```
+
+---
+
+## 🚀 Deployment
+
+This project is configured for deployment using **Dokploy** or standard **Docker Compose**.
+
+### Docker Compose Deployment
+
+The root `docker-compose.yaml` is production-ready.
+
+1. Ensure all environment variables are set on your server.
+2. Run:
+   ```bash
+   docker compose up -d --build
+   ```
+
+### CI/CD
+
+- **GitHub Actions:**
+  - Automatically runs database migrations on push to `main`.
+  - Checks types and lints code.
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repo
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request

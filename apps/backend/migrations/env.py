@@ -10,7 +10,7 @@ from sqlmodel import SQLModel
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Import all your SQLModel models
+# Import all SQLModel models
 from src.user.model import User
 from src.job_applications.model import JobApplication
 

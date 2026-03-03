@@ -1,40 +1,40 @@
 import asyncio
 import logging
-from typing import Annotated, List, Dict, Any, Optional
+import operator
 from datetime import date
-from langchain_mistralai import ChatMistralAI
-from pydantic import BaseModel
-from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.graph import START, END, StateGraph
-from langgraph.graph.state import CompiledStateGraph
+from typing import Annotated, Any, Dict, List, Optional
+
 from langchain_core.messages import (
     BaseMessage,
-    SystemMessage,
     HumanMessage,
+    SystemMessage,
     ToolMessage,
 )
-import operator
+from langchain_mistralai import ChatMistralAI
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command
+from pydantic import BaseModel
 
+from src.configs.database_config import get_session_context
 from src.core.constants import MODEL_NAME
-from src.job_applications.types import (
-    ResearchCategory,
-    DiscoveredCompanyProfile,
-    EventStatus,
-    PipelineStep,
-)
+from src.core.rate_limit_handlers import RateLimiter, retry_with_backoff
+from src.core.service_registry import ServiceRegistry
 from src.job_applications.prompts.company_profiler import (
     research_executor_system_prompt,
 )
 from src.job_applications.tools import (
-    tavily_tool,
-    scraping_tool,
     ResearchDoneTool,
+    scraping_tool,
+    tavily_tool,
 )
-from src.core.rate_limit_handlers import RateLimiter, retry_with_backoff
-from src.configs.database_config import get_session_context
-from src.core.service_registry import ServiceRegistry
-from src.job_applications.types import ResumeGenerationStatus
+from src.job_applications.types import (
+    DiscoveredCompanyProfile,
+    EventStatus,
+    PipelineStep,
+    ResearchCategory,
+)
 
 logger = logging.getLogger(__name__)
 

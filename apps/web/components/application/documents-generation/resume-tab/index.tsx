@@ -16,10 +16,6 @@ export default function ResumeGenerationTab() {
     (state) => state.snapshot?.events || EMPTY_EVENTS
   )
 
-  const latestEvaluatorEvent = events.findLast(
-    (e) => e.event_name === "pipeline.step" && e.step === "resume_evaluation"
-  )
-
   const latestEvent = events.findLast(
     (e) =>
       e.event_name === "pipeline.step" &&
@@ -41,7 +37,7 @@ export default function ResumeGenerationTab() {
       <div className="space-y-8">
         {/* Completed Header */}
         <ResultsHeader
-          latestEvaluatorEvent={latestEvaluatorEvent!}
+          strategyBrief={snapshot.resume_strategy_brief}
           title="Resume Generation Complete"
         />
         {/* Resume Display */}

@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 from logging import getLogger
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from fastapi import (
     APIRouter,
@@ -14,19 +14,19 @@ from fastapi import (
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from src.core.types import Resume
 from src.auth.dependencies import get_current_user
+from src.core.types import Resume
 from src.job_applications.dependencies import get_job_application_service
+from src.job_applications.generate_resume_job import start_resume_generation
+from src.job_applications.model import JobApplication
 from src.job_applications.services.job_application_service import JobApplicationService
-from src.user.model import User
 from src.job_applications.types import (
     CreateJobApplicationRequest,
     JobApplicationPreview,
     ResumeGenerationStatus,
 )
-from src.job_applications.model import JobApplication
-from src.job_applications.generate_resume_job import start_resume_generation
 from src.user.dependencies import get_user_service
+from src.user.model import User
 from src.user.service import UserService
 
 logger = getLogger(__name__)
@@ -48,9 +48,7 @@ class PaginatedJobApplicationsResponse(BaseModel):
 def start_application_resume_generation(
     application_data: CreateJobApplicationRequest,
     current_user: User = Depends(get_current_user),
-    job_application_service: JobApplicationService = Depends(
-        get_job_application_service
-    ),
+    job_application_service: JobApplicationService = Depends(get_job_application_service),
 ):
     try:
         job_application = job_application_service.create_job_application(
@@ -63,24 +61,16 @@ def start_application_resume_generation(
             )
         )
 
-        resume_generation_job = start_resume_generation.delay(
-            job_application_id=job_application.id
-        )
+        resume_generation_job = start_resume_generation.delay(job_application_id=job_application.id)
         job_application.resume_generation_status = ResumeGenerationStatus.STARTED.value
         job_application.background_task_id = resume_generation_job.id
-        updated_application = job_application_service.update_job_application(
-            job_application
-        )
+        updated_application = job_application_service.update_job_application(job_application)
         return updated_application
     except HTTPException as e:
-        logger.error(
-            f"ERROR in job_application router start_application_resume_generation {str(e)}"
-        )
+        logger.error(f"ERROR in job_application router start_application_resume_generation {str(e)}")
         return e
     except Exception as e:
-        logger.error(
-            f"ERROR in job_application router start_application_resume_generation {str(e)}"
-        )
+        logger.error(f"ERROR in job_application router start_application_resume_generation {str(e)}")
         return HTTPException(status_code=500, detail="Internal Server error")
 
 
@@ -89,26 +79,17 @@ async def list_job_applications(
     offset: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
     user: User = Depends(get_current_user),
-    job_application_service: JobApplicationService = Depends(
-        get_job_application_service
-    ),
+    job_application_service: JobApplicationService = Depends(get_job_application_service),
 ):
     """
     Get a paginated list of job applications
     """
     try:
-        job_applications, total = job_application_service.list_paginated(
-            user.id, offset, limit
-        )
-        job_applications_previews = [
-            JobApplicationPreview(**job_application.model_dump())
-            for job_application in job_applications
-        ]
+        job_applications, total = job_application_service.list_paginated(user.id, offset, limit)
+        job_applications_previews = [JobApplicationPreview(**job_application.model_dump()) for job_application in job_applications]
         has_next = (offset + limit) < total
         logger.debug("PAGINATED APPLICATIONS", job_applications_previews)
-        return PaginatedJobApplicationsResponse(
-            items=job_applications_previews, total=total, has_next=has_next
-        )
+        return PaginatedJobApplicationsResponse(items=job_applications_previews, total=total, has_next=has_next)
     except Exception as e:
         logger.error(f"Error listing job applications: {e}")
         return PaginatedJobApplicationsResponse(items=[], total=0, has_next=False)
@@ -120,9 +101,7 @@ async def search_job_applications(
     offset: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
     user: User = Depends(get_current_user),
-    job_application_service: JobApplicationService = Depends(
-        get_job_application_service
-    ),
+    job_application_service: JobApplicationService = Depends(get_job_application_service),
 ):
     """
     Search for job applications with comprehensive filtering support
@@ -130,17 +109,10 @@ async def search_job_applications(
     - search_term: matches app name or description
     """
     try:
-        job_applications, total = job_application_service.search_job_applications(
-            search_term=search_term, offset=offset, limit=limit, user_id=user.id
-        )
-        job_applications_previews = [
-            JobApplicationPreview(**job_application.model_dump())
-            for job_application in job_applications
-        ]
+        job_applications, total = job_application_service.search_job_applications(search_term=search_term, offset=offset, limit=limit, user_id=user.id)
+        job_applications_previews = [JobApplicationPreview(**job_application.model_dump()) for job_application in job_applications]
         has_next = (offset + limit) < total
-        return PaginatedJobApplicationsResponse(
-            items=job_applications_previews, total=total, has_next=has_next
-        )
+        return PaginatedJobApplicationsResponse(items=job_applications_previews, total=total, has_next=has_next)
     except Exception as e:
         logger.error(f"Error searching job applications: {e}")
         return PaginatedJobApplicationsResponse(items=[], total=0, has_next=False)
@@ -152,9 +124,7 @@ async def application_snapshot_sse(
     token: str,
     request: Request,
     user_service: UserService = Depends(get_user_service),
-    job_application_service: JobApplicationService = Depends(
-        get_job_application_service
-    ),
+    job_application_service: JobApplicationService = Depends(get_job_application_service),
     poll_interval_ms: int = 1000,
     events_limit: int = 200,
 ):
@@ -172,9 +142,7 @@ async def application_snapshot_sse(
     if not app_obj:
         raise HTTPException(status_code=404, detail="Job application not found")
     if app_obj.user_id != current_user.id:
-        raise HTTPException(
-            status_code=403, detail="Not authorized for this application"
-        )
+        raise HTTPException(status_code=403, detail="Not authorized for this application")
 
     def _serialize_event(ev) -> Dict[str, Any]:
         return {
@@ -204,11 +172,10 @@ async def application_snapshot_sse(
             "company_name": app.company_name,
             "job_description": app.job_description,
             "background_task_id": app.background_task_id,
-            "resume_generation_status": (
-                app.resume_generation_status if app.resume_generation_status else None
-            ),
+            "resume_generation_status": (app.resume_generation_status if app.resume_generation_status else None),
             "company_profile": app.company_profile,
             "generated_resume": app.generated_resume,
+            "resume_strategy_brief": app.resume_strategy_brief,
             "original_resume_snapshot": app.original_resume_snapshot,
             "generated_cover_letter": app.generated_cover_letter,
             "created_at": app.created_at.isoformat() if app.created_at else None,
@@ -229,9 +196,7 @@ async def application_snapshot_sse(
                 break
 
             try:
-                app = job_application_service.get_job_application(
-                    application_id, refresh=True
-                )
+                app = job_application_service.get_job_application(application_id, refresh=True)
 
                 if not app:
                     yield _format_sse("gone", {"detail": "not_found"})
@@ -243,9 +208,7 @@ async def application_snapshot_sse(
 
                 # Always send the current state
                 payload = _serialize_job_application(app)
-                event_id = (
-                    f"{app.updated_at.isoformat() if app.updated_at else '0'}:{counter}"
-                )
+                event_id = f"{app.updated_at.isoformat() if app.updated_at else '0'}:{counter}"
 
                 # Add status change indicator
                 if status_changed:
@@ -275,12 +238,8 @@ async def application_snapshot_sse(
                 await asyncio.sleep(max(0.1, poll_interval_ms / 1000.0))
 
             except Exception as e:
-                logger.error(
-                    f"Error in SSE stream for application {application_id}: {e}"
-                )
-                yield _format_sse(
-                    "stream-error", {"detail": "stream_error", "message": str(e)}
-                )
+                logger.error(f"Error in SSE stream for application {application_id}: {e}")
+                yield _format_sse("stream-error", {"detail": "stream_error", "message": str(e)})
                 break
 
     from os import getenv
@@ -293,25 +252,19 @@ async def application_snapshot_sse(
         "Access-Control-Allow-Origin": getenv("FRONTEND_URL", "http://localhost:3000"),
         "Access-Control-Allow-Credentials": "true",
     }
-    return StreamingResponse(
-        event_generator(), media_type="text/event-stream", headers=headers
-    )
+    return StreamingResponse(event_generator(), media_type="text/event-stream", headers=headers)
 
 
 @job_application_router.get("/stats")
 async def get_resume_creation_stats(
     current_user: User = Depends(get_current_user),
-    job_application_service: JobApplicationService = Depends(
-        get_job_application_service
-    ),
+    job_application_service: JobApplicationService = Depends(get_job_application_service),
 ):
     try:
         stats = job_application_service.get_stats(current_user.id)
         return stats
     except Exception as e:
-        logger.error(
-            f"ERROR in job_application router get_resume_creation_stats {str(e)}"
-        )
+        logger.error(f"ERROR in job_application router get_resume_creation_stats {str(e)}")
         return HTTPException(status_code=500, detail="Internal Server error")
 
 
@@ -324,31 +277,21 @@ async def update_generated_resume(
     application_id: str,
     request: UpdateResumeRequest,
     current_user: User = Depends(get_current_user),
-    job_application_service: JobApplicationService = Depends(
-        get_job_application_service
-    ),
+    job_application_service: JobApplicationService = Depends(get_job_application_service),
 ):
     try:
-        job_application = job_application_service.get_user_job_application(
-            application_id, current_user.id, refresh=True
-        )
+        job_application = job_application_service.get_user_job_application(application_id, current_user.id, refresh=True)
         if not job_application:
-            return HTTPException(
-                status_code=404, detail="No job application found for the given user"
-            )
+            return HTTPException(status_code=404, detail="No job application found for the given user")
         if not job_application.generated_resume:
             return HTTPException(
                 status_code=400,
                 detail="Cannot update job application resume because it isn't generated yet",
             )
-        updated_job_application = job_application_service.save_generated_resume(
-            application_id, request.resume
-        )
+        updated_job_application = job_application_service.save_generated_resume(application_id, request.resume)
         return updated_job_application
     except Exception as e:
-        logger.error(
-            f"ERROR in job_application router update_generated_resume {str(e)}"
-        )
+        logger.error(f"ERROR in job_application router update_generated_resume {str(e)}")
         return HTTPException(status_code=500, detail="Internal Server error")
 
 
@@ -361,31 +304,21 @@ async def update_generated_cover_letter(
     application_id: str,
     cover_letter: UpdateCoverLetterRequest,
     current_user: User = Depends(get_current_user),
-    job_application_service: JobApplicationService = Depends(
-        get_job_application_service
-    ),
+    job_application_service: JobApplicationService = Depends(get_job_application_service),
 ):
     try:
-        job_application = job_application_service.get_user_job_application(
-            application_id, current_user.id, refresh=True
-        )
+        job_application = job_application_service.get_user_job_application(application_id, current_user.id, refresh=True)
         if not job_application:
-            return HTTPException(
-                status_code=404, detail="No job application found for the given user"
-            )
+            return HTTPException(status_code=404, detail="No job application found for the given user")
         if not job_application.generated_cover_letter:
             return HTTPException(
                 status_code=400,
                 detail="Cannot update job application cover letter because it isn't generated yet",
             )
-        updated_job_application = job_application_service.save_generated_cover_letter(
-            application_id, cover_letter.cover_letter_content
-        )
+        updated_job_application = job_application_service.save_generated_cover_letter(application_id, cover_letter.cover_letter_content)
         return updated_job_application
     except Exception as e:
-        logger.error(
-            f"ERROR in job_application router update_generated_cover_letter {str(e)}"
-        )
+        logger.error(f"ERROR in job_application router update_generated_cover_letter {str(e)}")
         return HTTPException(status_code=500, detail="Internal Server error")
 
 
@@ -393,18 +326,12 @@ async def update_generated_cover_letter(
 async def delete_job_application(
     application_id: str,
     current_user: User = Depends(get_current_user),
-    job_application_service: JobApplicationService = Depends(
-        get_job_application_service
-    ),
+    job_application_service: JobApplicationService = Depends(get_job_application_service),
 ):
     try:
-        job_application = job_application_service.get_user_job_application(
-            application_id, current_user.id, refresh=True
-        )
+        job_application = job_application_service.get_user_job_application(application_id, current_user.id, refresh=True)
         if not job_application:
-            return HTTPException(
-                status_code=404, detail="No job application found for the given user"
-            )
+            return HTTPException(status_code=404, detail="No job application found for the given user")
 
         return job_application_service.delete_job_application(application_id)
     except Exception as e:
@@ -416,18 +343,12 @@ async def delete_job_application(
 async def get_job_application(
     application_id: str,
     current_user: User = Depends(get_current_user),
-    job_application_service: JobApplicationService = Depends(
-        get_job_application_service
-    ),
+    job_application_service: JobApplicationService = Depends(get_job_application_service),
 ):
     try:
-        job_application = job_application_service.get_user_job_application(
-            application_id, current_user.id, refresh=True
-        )
+        job_application = job_application_service.get_user_job_application(application_id, current_user.id, refresh=True)
         if not job_application:
-            return HTTPException(
-                status_code=404, detail="No job application found for the given user"
-            )
+            return HTTPException(status_code=404, detail="No job application found for the given user")
         return job_application
     except Exception as e:
         logger.error(f"ERROR in job_application router get_job_application {str(e)}")

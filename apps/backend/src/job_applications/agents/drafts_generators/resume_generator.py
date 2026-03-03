@@ -7,7 +7,6 @@ from langchain_core.messages import (
     SystemMessage,
 )
 from langchain_core.runnables import RunnableConfig
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_mistralai import ChatMistralAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
@@ -17,7 +16,7 @@ from pydantic import BaseModel
 
 from src.configs.database_config import get_session_context
 from src.core.constants import (
-    GEMINI_MODEL_NAME,
+    MODEL_NAME,
     STRUCTURED_OUTPUT_MAX_RETRY,
 )
 from src.core.rate_limit_handlers import RateLimiter, retry_with_backoff
@@ -31,7 +30,9 @@ from src.job_applications.types import (
     EventStatus,
     GeneratedResumeEvaluation,
     PipelineStep,
+    ResumeGenerationOutput,
     ResumeGenerationStatus,
+    ResumeStrategyBrief,
 )
 
 logger = logging.getLogger(__name__)
@@ -47,6 +48,7 @@ class ResumeGeneratorState(BaseModel):
     max_evaluations: int = 5
     current_evaluation: int = 0
     generated_resume: Optional[Resume] = None
+    strategy_brief: Optional[ResumeStrategyBrief] = None
     evaluation_results: Optional[GeneratedResumeEvaluation] = None
     evaluation_grade_threshold: int = 90
 
@@ -58,7 +60,7 @@ class ResumeGeneratorAgent:
         debug: bool = False,
         rate_limiter=None,
     ) -> None:
-        self.model = ChatGoogleGenerativeAI(model=GEMINI_MODEL_NAME)
+        self.model = model or ChatMistralAI(model=MODEL_NAME, max_tokens=8192)
         self.debug = debug
         self.rate_limiter = RateLimiter(0.5)
 
@@ -76,9 +78,7 @@ class ResumeGeneratorAgent:
             builder.add_edge("finalize_generation", END)
             return builder.compile(checkpointer=checkpointer, debug=self.debug)
         except Exception as e:
-            logger.error(
-                "Error building the graph for the resume generator", error=str(e)
-            )
+            logger.error("Error building the graph for the resume generator", error=str(e))
             raise e
 
     async def generator(self, state: ResumeGeneratorState, config: RunnableConfig):
@@ -121,12 +121,8 @@ class ResumeGeneratorAgent:
                     )
                 )
             async with self.rate_limiter:
-                configured_model = self.model.with_structured_output(Resume).with_retry(
-                    stop_after_attempt=STRUCTURED_OUTPUT_MAX_RETRY
-                )
-                response = await retry_with_backoff(
-                    lambda: configured_model.ainvoke(messages)
-                )
+                configured_model = self.model.with_structured_output(ResumeGenerationOutput).with_retry(stop_after_attempt=STRUCTURED_OUTPUT_MAX_RETRY)
+                response: ResumeGenerationOutput = await retry_with_backoff(lambda: configured_model.ainvoke(messages))
             with get_session_context() as session:
                 event_service = ServiceRegistry.get_events_service(session)
                 event_service.emit_pipeline_step(
@@ -137,20 +133,23 @@ class ResumeGeneratorAgent:
                     data={
                         "iteration": state.current_evaluation,
                         "max_iterations": state.max_evaluations,
+                        "strategy_brief": response.strategy_brief.model_dump(),
                     },
                 )
 
             logger.debug("RESPONSE FROM RESUME GENERATOR: ", response=response)
-            return Command(goto="evaluator", update={"generated_resume": response})
+            return Command(
+                goto="evaluator",
+                update={
+                    "generated_resume": response.resume,
+                    "strategy_brief": response.strategy_brief,
+                },
+            )
         except Exception as e:
             with get_session_context() as session:
-                job_application_service = ServiceRegistry.get_job_application_service(
-                    session
-                )
+                job_application_service = ServiceRegistry.get_job_application_service(session)
                 event_service = ServiceRegistry.get_events_service(session)
-                job_application_service.update_job_application_status(
-                    state.job_application_id, ResumeGenerationStatus.FAILED
-                )
+                job_application_service.update_job_application_status(state.job_application_id, ResumeGenerationStatus.FAILED)
                 event_service.emit_pipeline_step(
                     job_application_id=state.job_application_id,
                     step=PipelineStep.RESUME_GENERATION,
@@ -210,12 +209,8 @@ class ResumeGeneratorAgent:
                     )
                 )
             async with self.rate_limiter:
-                configured_model = self.model.with_structured_output(
-                    GeneratedResumeEvaluation
-                ).with_retry(stop_after_attempt=STRUCTURED_OUTPUT_MAX_RETRY)
-                response = await retry_with_backoff(
-                    lambda: configured_model.ainvoke(messages)
-                )
+                configured_model = self.model.with_structured_output(GeneratedResumeEvaluation).with_retry(stop_after_attempt=STRUCTURED_OUTPUT_MAX_RETRY)
+                response = await retry_with_backoff(lambda: configured_model.ainvoke(messages))
             with get_session_context() as session:
                 event_service = ServiceRegistry.get_events_service(session)
                 event_service.emit_pipeline_step(
@@ -242,13 +237,9 @@ class ResumeGeneratorAgent:
                 return Command(goto="finalize_generation")
         except Exception as e:
             with get_session_context() as session:
-                job_application_service = ServiceRegistry.get_job_application_service(
-                    session
-                )
+                job_application_service = ServiceRegistry.get_job_application_service(session)
                 event_service = ServiceRegistry.get_events_service(session)
-                job_application_service.update_job_application_status(
-                    state.job_application_id, ResumeGenerationStatus.FAILED
-                )
+                job_application_service.update_job_application_status(state.job_application_id, ResumeGenerationStatus.FAILED)
                 event_service.emit_pipeline_step(
                     job_application_id=state.job_application_id,
                     step=PipelineStep.RESUME_GENERATION,
@@ -264,18 +255,14 @@ class ResumeGeneratorAgent:
             logger.error(f"Error running the resume evaluator: {str(e)}")
             raise e
 
-    async def finalize_generation(
-        self, state: ResumeGeneratorState, config: RunnableConfig
-    ):
+    async def finalize_generation(self, state: ResumeGeneratorState, config: RunnableConfig):
         try:
             with get_session_context() as session:
-                job_application_service = ServiceRegistry.get_job_application_service(
-                    session
-                )
+                job_application_service = ServiceRegistry.get_job_application_service(session)
                 events_service = ServiceRegistry.get_events_service(session)
-                job_application_service.save_generated_resume(
-                    state.job_application_id, state.generated_resume
-                )
+                job_application_service.save_generated_resume(state.job_application_id, state.generated_resume)
+                if state.strategy_brief:
+                    job_application_service.save_resume_strategy_brief(state.job_application_id, state.strategy_brief)
                 events_service.emit_pipeline_step(
                     job_application_id=state.job_application_id,
                     step=PipelineStep.RESUME_GENERATION,
@@ -295,13 +282,9 @@ class ResumeGeneratorAgent:
 
         except Exception as e:
             with get_session_context() as session:
-                job_application_service = ServiceRegistry.get_job_application_service(
-                    session
-                )
+                job_application_service = ServiceRegistry.get_job_application_service(session)
                 event_service = ServiceRegistry.get_events_service(session)
-                job_application_service.update_job_application_status(
-                    state.job_application_id, ResumeGenerationStatus.FAILED
-                )
+                job_application_service.update_job_application_status(state.job_application_id, ResumeGenerationStatus.FAILED)
                 event_service.emit_pipeline_step(
                     job_application_id=state.job_application_id,
                     step=PipelineStep.RESUME_GENERATION,

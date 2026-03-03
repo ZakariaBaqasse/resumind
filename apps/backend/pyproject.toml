@@ -46,14 +46,18 @@ dependencies = [
 ]
 
 [tool.black]
-line-length = 88
+line-length = 255
 target-version = ['py39']
 include = '\.pyi?$'
 
 [tool.ruff]
-line-length = 88
+line-length = 255
 lint.select = ["E", "F", "I"]
 
 [tool.mypy]
 python_version = "3.9"
 strict = true
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+env_files = [".env.test"]

@@ -1,11 +1,8 @@
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional
 from uuid import uuid4
 
-from sqlmodel import JSON, Column, Field, SQLModel, Relationship
-from sqlalchemy import Enum as SQLAlchemyEnum
-
-from src.job_applications.types import ResumeGenerationStatus
+from sqlmodel import JSON, Column, Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
     from src.user.model import User
@@ -16,16 +13,11 @@ class JobApplicationBase(SQLModel):
     job_title: str
     company_name: str
     job_description: str
-    company_profile: Optional[Dict[str, Any]] = Field(
-        default=None, alias="companyProfile", sa_column=Column(JSON)
-    )
-    generated_resume: Optional[Dict[str, Any]] = Field(
-        default=None, alias="generatedResume", sa_column=Column(JSON)
-    )
+    company_profile: Optional[Dict[str, Any]] = Field(default=None, alias="companyProfile", sa_column=Column(JSON))
+    generated_resume: Optional[Dict[str, Any]] = Field(default=None, alias="generatedResume", sa_column=Column(JSON))
+    resume_strategy_brief: Optional[Dict[str, Any]] = Field(default=None, sa_column=Column(JSON))
     generated_cover_letter: Optional[str]
-    original_resume_snapshot: Optional[Dict[str, Any]] = Field(
-        default=None, alias="originalResumeSnapshot", sa_column=Column(JSON)
-    )
+    original_resume_snapshot: Optional[Dict[str, Any]] = Field(default=None, alias="originalResumeSnapshot", sa_column=Column(JSON))
     background_task_id: Optional[str]
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
@@ -68,9 +60,7 @@ class EventBase(SQLModel):
     id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
 
     # Link to job application (events fetched by job_application_id)
-    job_application_id: str = Field(
-        ..., foreign_key="app.job_applications.id", ondelete="CASCADE", index=True
-    )
+    job_application_id: str = Field(..., foreign_key="app.job_applications.id", ondelete="CASCADE", index=True)
 
     # Event taxonomy fields (kept flexible as strings)
     event_name: str = Field(index=True)  # e.g., "pipeline.step", "tool.execution"

@@ -1,35 +1,40 @@
 import logging
 import operator
-from typing import Optional, Dict, Any, Annotated, List
 from datetime import date
-from langchain_mistralai import ChatMistralAI
-from pydantic import BaseModel
-from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.graph import START, END, StateGraph
-from langgraph.graph.state import CompiledStateGraph
+from typing import Annotated, Any, Dict, List, Optional
+
 from langchain_core.messages import (
-    SystemMessage,
     HumanMessage,
+    SystemMessage,
 )
 from langchain_core.runnables import RunnableConfig
+from langchain_mistralai import ChatMistralAI
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import Command, Send
+from pydantic import BaseModel
 
 from src.configs.database_config import get_session_context
 from src.core.constants import MODEL_NAME, STRUCTURED_OUTPUT_MAX_RETRY
+from src.core.rate_limit_handlers import RateLimiter, retry_with_backoff
 from src.core.service_registry import ServiceRegistry
-from src.job_applications.types import ResearchPlan, EventStatus, PipelineStep
-from src.job_applications.prompts.company_profiler import (
-    research_planner_system_prompt,
+from src.job_applications.agents.company_profiler_agents.company_discovery_agent import (
+    CompanyDiscoveryAgent,
 )
 from src.job_applications.agents.company_profiler_agents.research_executor_agent import (
     ResearchExecutor,
 )
-from src.job_applications.agents.company_profiler_agents.company_discovery_agent import (
-    CompanyDiscoveryAgent,
+from src.job_applications.prompts.company_profiler import (
+    research_planner_system_prompt,
 )
-from src.job_applications.types import DiscoveredCompanyProfile
-from src.core.rate_limit_handlers import RateLimiter, retry_with_backoff
-from src.job_applications.types import ResumeGenerationStatus
+from src.job_applications.types import (
+    DiscoveredCompanyProfile,
+    EventStatus,
+    PipelineStep,
+    ResearchPlan,
+    ResumeGenerationStatus,
+)
 
 logger = logging.getLogger(__name__)
 

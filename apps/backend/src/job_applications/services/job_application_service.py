@@ -1,7 +1,8 @@
-from logging import getLogger
-from typing import List, Optional, Dict, Tuple
-from sqlalchemy.orm.attributes import flag_modified
 from datetime import datetime, timezone
+from logging import getLogger
+from typing import Dict, List, Optional, Tuple
+
+from sqlalchemy.orm.attributes import flag_modified
 
 from src.core.types import Resume
 from src.job_applications.model import JobApplication
@@ -13,8 +14,8 @@ from src.job_applications.types import (
     ResearchPlan,
     ResumeGenerationStatus,
     ResumesCreationStats,
+    ResumeStrategyBrief,
 )
-
 
 logger = getLogger(__name__)
 
@@ -28,9 +29,7 @@ class JobApplicationService:
     def __init__(self, job_application_repository: JobApplicationRepository):
         self.job_application_repository = job_application_repository
 
-    def create_job_application(
-        self, application_data: JobApplication
-    ) -> JobApplication:
+    def create_job_application(self, application_data: JobApplication) -> JobApplication:
         """
         Create a new job application.
 
@@ -43,9 +42,7 @@ class JobApplicationService:
         # Create the new user
         return self.job_application_repository.create(application_data)
 
-    def get_job_application(
-        self, application_id: str, *, refresh: bool = False
-    ) -> Optional[JobApplication]:
+    def get_job_application(self, application_id: str, *, refresh: bool = False) -> Optional[JobApplication]:
         """
         Get a job application by ID.
 
@@ -56,13 +53,9 @@ class JobApplicationService:
         Returns:
             The job application if found, None otherwise
         """
-        return self.job_application_repository.get_by_id(
-            application_id, refresh=refresh
-        )
+        return self.job_application_repository.get_by_id(application_id, refresh=refresh)
 
-    def get_user_job_application(
-        self, application_id: str, user_id: str, *, refresh: bool = False
-    ) -> Optional[JobApplication]:
+    def get_user_job_application(self, application_id: str, user_id: str, *, refresh: bool = False) -> Optional[JobApplication]:
         """
         Get a job application by ID and user id.
 
@@ -74,9 +67,7 @@ class JobApplicationService:
         Returns:
             The job application if found, None otherwise
         """
-        return self.job_application_repository.get_by_id_and_user(
-            application_id, user_id, refresh=refresh
-        )
+        return self.job_application_repository.get_by_id_and_user(application_id, user_id, refresh=refresh)
 
     def list_job_applications(self) -> List[JobApplication]:
         """
@@ -87,9 +78,7 @@ class JobApplicationService:
         """
         return self.job_application_repository.get_all()
 
-    def list_paginated(
-        self, user_id: str, offset: int = 0, limit: int = 30
-    ) -> Tuple[List[JobApplication], int]:
+    def list_paginated(self, user_id: str, offset: int = 0, limit: int = 30) -> Tuple[List[JobApplication], int]:
         """
         List job applications with pagination
 
@@ -102,27 +91,19 @@ class JobApplicationService:
             Tuple[List[JobApplication], int]: A tuple containing the list of job applications and the total count
         """
         try:
-            return self.job_application_repository.list_paginated(
-                user_id, offset, limit
-            )
+            return self.job_application_repository.list_paginated(user_id, offset, limit)
         except Exception as e:
             logger.error(f"Error listing paginated apps: {e}")
             raise e
 
-    def search_job_applications(
-        self, user_id: str, search_term: str, offset: int = 0, limit: int = 100
-    ) -> Tuple[List[JobApplication], int]:
+    def search_job_applications(self, user_id: str, search_term: str, offset: int = 0, limit: int = 100) -> Tuple[List[JobApplication], int]:
         """
         List job applications with names or descriptions that match a pattern using LIKE search
         """
         try:
-            return self.job_application_repository.search_job_applications(
-                user_id, search_term, offset, limit
-            )
+            return self.job_application_repository.search_job_applications(user_id, search_term, offset, limit)
         except Exception as e:
-            logger.error(
-                f"Error searching job applications by name or description like '{search_term}': {e}"
-            )
+            logger.error(f"Error searching job applications by name or description like '{search_term}': {e}")
             return [], 0
 
     def delete_job_application(self, application_id: str) -> bool:
@@ -149,9 +130,7 @@ class JobApplicationService:
         """
         return self.job_application_repository.update(job_application)
 
-    def update_company_profile_discovery_results(
-        self, application_id: str, discovery_results: DiscoveredCompanyProfile
-    ):
+    def update_company_profile_discovery_results(self, application_id: str, discovery_results: DiscoveredCompanyProfile):
         try:
             job_application = self.job_application_repository.get_by_id(application_id)
             if not job_application:
@@ -160,20 +139,14 @@ class JobApplicationService:
             if not job_application.company_profile:
                 job_application.company_profile = {}
 
-            job_application.company_profile["company_discovery_results"] = (
-                discovery_results.model_dump()
-            )
+            job_application.company_profile["company_discovery_results"] = discovery_results.model_dump()
             flag_modified(job_application, "company_profile")
             return self.job_application_repository.update(job_application)
         except Exception as e:
-            logger.error(
-                f"ERROR: in JobApplicationService in update_company_profile_discovery_results: {str(e)}"
-            )
+            logger.error(f"ERROR: in JobApplicationService in update_company_profile_discovery_results: {str(e)}")
             raise e
 
-    def update_company_profile_research_plan(
-        self, application_id: str, research_plan: ResearchPlan
-    ):
+    def update_company_profile_research_plan(self, application_id: str, research_plan: ResearchPlan):
         try:
             job_application = self.job_application_repository.get_by_id(application_id)
             if not job_application:
@@ -182,20 +155,14 @@ class JobApplicationService:
             if not job_application.company_profile:
                 job_application.company_profile = {}
 
-            job_application.company_profile["research_plan"] = (
-                research_plan.model_dump()
-            )
+            job_application.company_profile["research_plan"] = research_plan.model_dump()
             flag_modified(job_application, "company_profile")
             return self.job_application_repository.update(job_application)
         except Exception as e:
-            logger.error(
-                f"ERROR: in JobApplicationService in update_company_profile_research_plan: {str(e)}"
-            )
+            logger.error(f"ERROR: in JobApplicationService in update_company_profile_research_plan: {str(e)}")
             raise e
 
-    def update_company_profile_research_results(
-        self, application_id: str, research_results: Dict[str, str]
-    ):
+    def update_company_profile_research_results(self, application_id: str, research_results: Dict[str, str]):
         try:
             job_application = self.job_application_repository.get_by_id(application_id)
             if not job_application:
@@ -208,14 +175,10 @@ class JobApplicationService:
             flag_modified(job_application, "company_profile")
             return self.job_application_repository.update(job_application)
         except Exception as e:
-            logger.error(
-                f"ERROR: in JobApplicationService in update_company_profile_research_plan: {str(e)}"
-            )
+            logger.error(f"ERROR: in JobApplicationService in update_company_profile_research_plan: {str(e)}")
             raise e
 
-    def append_company_profile_category_research_results(
-        self, application_id: str, category_name: str, results: str
-    ):
+    def append_company_profile_category_research_results(self, application_id: str, category_name: str, results: str):
         try:
             job_application = self.job_application_repository.get_by_id(application_id)
             if not job_application:
@@ -223,70 +186,58 @@ class JobApplicationService:
 
             if not job_application.company_profile:
                 job_application.company_profile = {}
-            if (
-                "research_results" not in job_application.company_profile
-                or not isinstance(
-                    job_application.company_profile["research_results"], dict
-                )
-            ):
+            if "research_results" not in job_application.company_profile or not isinstance(job_application.company_profile["research_results"], dict):
                 job_application.company_profile["research_results"] = {}
 
             job_application.company_profile["research_results"][category_name] = results
             flag_modified(job_application, "company_profile")
             return self.job_application_repository.update(job_application)
         except Exception as e:
-            logger.error(
-                f"ERROR: in JobApplicationService in append_company_profile_category_research_results: {str(e)}"
-            )
+            logger.error(f"ERROR: in JobApplicationService in append_company_profile_category_research_results: {str(e)}")
             raise e
 
-    def update_job_application_status(
-        self, job_application_id: str, status: ResumeGenerationStatus
-    ):
+    def update_job_application_status(self, job_application_id: str, status: ResumeGenerationStatus):
         try:
-            job_application = self.job_application_repository.get_by_id(
-                job_application_id
-            )
+            job_application = self.job_application_repository.get_by_id(job_application_id)
             if not job_application:
                 raise Exception("No job application found with the given ID")
             job_application.resume_generation_status = status.value
             return self.update_job_application(job_application)
         except Exception as e:
-            logger.error(
-                f"ERROR: in JobApplicationService in update_job_application_status: {str(e)}"
-            )
+            logger.error(f"ERROR: in JobApplicationService in update_job_application_status: {str(e)}")
             raise e
 
     def save_generated_resume(self, job_application_id: str, generated_resume: Resume):
         try:
-            job_application = self.job_application_repository.get_by_id(
-                job_application_id
-            )
+            job_application = self.job_application_repository.get_by_id(job_application_id)
             if not job_application:
                 raise Exception("No job application found with the given ID")
             job_application.generated_resume = generated_resume.model_dump()
             return self.update_job_application(job_application)
         except Exception as e:
-            logger.error(
-                f"ERROR: in JobApplicationService in save_generated_resume: {str(e)}"
-            )
+            logger.error(f"ERROR: in JobApplicationService in save_generated_resume: {str(e)}")
             raise e
 
-    def save_generated_cover_letter(
-        self, job_application_id: str, generated_cover_letter: str
-    ):
+    def save_resume_strategy_brief(self, job_application_id: str, strategy_brief: ResumeStrategyBrief):
         try:
-            job_application = self.job_application_repository.get_by_id(
-                job_application_id
-            )
+            job_application = self.job_application_repository.get_by_id(job_application_id)
+            if not job_application:
+                raise Exception("No job application found with the given ID")
+            job_application.resume_strategy_brief = strategy_brief.model_dump()
+            return self.update_job_application(job_application)
+        except Exception as e:
+            logger.error(f"ERROR: in JobApplicationService in save_resume_strategy_brief: {str(e)}")
+            raise e
+
+    def save_generated_cover_letter(self, job_application_id: str, generated_cover_letter: str):
+        try:
+            job_application = self.job_application_repository.get_by_id(job_application_id)
             if not job_application:
                 raise Exception("No job application found with the given ID")
             job_application.generated_cover_letter = generated_cover_letter
             return self.update_job_application(job_application)
         except Exception as e:
-            logger.error(
-                f"ERROR: in JobApplicationService in save_generated_cover_letter: {str(e)}"
-            )
+            logger.error(f"ERROR: in JobApplicationService in save_generated_cover_letter: {str(e)}")
             raise e
 
     def get_stats(self, user_id: str) -> ResumesCreationStats:
@@ -294,17 +245,8 @@ class JobApplicationService:
             all_job_applications = self.job_application_repository.get_all(user_id)
 
             now = datetime.now(timezone.utc)
-            created_this_month = [
-                app
-                for app in all_job_applications
-                if app.created_at.year == now.year and app.created_at.month == now.month
-            ]
-            completed = [
-                app
-                for app in all_job_applications
-                if app.resume_generation_status
-                == ResumeGenerationStatus.COMPLETED.value
-            ]
+            created_this_month = [app for app in all_job_applications if app.created_at.year == now.year and app.created_at.month == now.month]
+            completed = [app for app in all_job_applications if app.resume_generation_status == ResumeGenerationStatus.COMPLETED.value]
             return ResumesCreationStats(
                 total_created=len(all_job_applications),
                 created_this_month=len(created_this_month),

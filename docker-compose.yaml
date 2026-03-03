@@ -124,8 +124,9 @@ services:
 
   web:
     build:
-      context: .
-      dockerfile: ./Dockerfile.web
+      context: ./apps/web
+      dockerfile: ./Dockerfile
+      target: runner
       args:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     environment:

@@ -77,6 +77,11 @@ export type CompanyProfile = {
   research_results?: Record<string, string>
 }
 
+export type ResumeStrategyBrief = {
+  top_keywords: string[]
+  narrative_changes: string[]
+}
+
 export type ResumeGenerationStatus =
   | "started"
   | "processing_company_profile"
@@ -109,6 +114,7 @@ export type JobApplicationSnapshot = {
   resume_generation_status?: ResumeGenerationStatus | null
   company_profile?: CompanyProfile | null
   generated_resume?: Resume
+  resume_strategy_brief?: ResumeStrategyBrief | null
   original_resume_snapshot?: Resume
   generated_cover_letter?: string
   created_at?: string | null

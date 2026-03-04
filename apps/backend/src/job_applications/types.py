@@ -115,7 +115,7 @@ class CompanyProfile(BaseModel):
     )
 
 
-class DiscoveryConfidence(str, Enum):
+class DiscoveryConfidence(Enum):
     """Enum representing the confidence level in the discovered company information."""
 
     HIGH = "high"
@@ -123,7 +123,7 @@ class DiscoveryConfidence(str, Enum):
     LOW = "low"
 
 
-class CompanySizeEstimate(str, Enum):
+class CompanySizeEstimate(Enum):
     """Enum representing the estimated size of a company."""
 
     STARTUP = "startup"
@@ -134,7 +134,7 @@ class CompanySizeEstimate(str, Enum):
     UNKNOWN = "unknown"
 
 
-class CompanyType(str, Enum):
+class CompanyType(Enum):
     """Enum representing the type of a company."""
 
     PUBLIC = "public"
@@ -145,7 +145,7 @@ class CompanyType(str, Enum):
     UNKNOWN = "unknown"
 
 
-class InformationAvailability(str, Enum):
+class InformationAvailability(Enum):
     """Enum representing the availability of information about a company."""
 
     HIGH = "high"
@@ -153,7 +153,7 @@ class InformationAvailability(str, Enum):
     LOW = "low"
 
 
-class WebPresenceQuality(str, Enum):
+class WebPresenceQuality(Enum):
     """Enum representing the quality of a company's web presence."""
 
     PROFESSIONAL = "professional"
@@ -162,7 +162,7 @@ class WebPresenceQuality(str, Enum):
     POOR = "poor"
 
 
-class ResearchDifficulty(str, Enum):
+class ResearchDifficulty(Enum):
     """Enum representing the difficulty of researching a company."""
 
     EASY = "easy"

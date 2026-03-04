@@ -45,6 +45,7 @@ async def start_resume_generation_async(
     from src.core.rate_limit_handlers import RateLimiter
     from src.core.service_registry import ServiceRegistry
     from src.job_applications.agents.main_graph import MainGraphAgent, MainGraphState
+    from src.user.model import User  # noqa: F401 - must be imported before JobApplication mapper is configured
 
     try:
         async with await psycopg.AsyncConnection.connect(db_url) as conn:

@@ -3,6 +3,7 @@
 This module sets up the FastAPI application with CORS middleware and includes
 routers for authentication, user management, and job applications.
 """
+
 import logging
 import os
 
@@ -26,7 +27,9 @@ app = FastAPI(title="Template API", version="0.0.1")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.environ.get("FRONTEND_URL", "http://localhost:3003")],  # Frontend URLs
+    allow_origins=[
+        os.environ.get("FRONTEND_URL", "http://localhost:3003")
+    ],  # Frontend URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -4,6 +4,7 @@ This module provides Celery tasks and async functions to orchestrate
 the resume generation workflow for job applications using LangGraph
 and PostgreSQL for checkpointing.
 """
+
 import asyncio
 import logging
 import os

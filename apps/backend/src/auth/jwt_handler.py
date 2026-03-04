@@ -5,6 +5,7 @@ This module provides JWT functionality including:
 - Decoding and validating JWT tokens
 - Verifying JWT tokens from HTTP authorization headers
 """
+
 import os
 from datetime import datetime, timedelta, UTC
 from typing import Any
@@ -27,18 +28,19 @@ security = HTTPBearer()
 
 class JWTHandler:
     """JWT token handler for creating, decoding, and verifying JWT tokens.
-    
+
     Methods:
     -------
     create_token(user_data: dict[str, Any], expires_delta: timedelta | None = None) -> str
         Create a new JWT token for a user with optional custom expiration time.
-    
+
     decode_token(token: str) -> dict[str, Any]
         Decode and validate a JWT token, checking for expiration.
-    
+
     verify_jwt(credentials: HTTPAuthorizationCredentials = Security(security)) -> dict[str, Any]
         Verify a JWT token extracted from the authorization header.
     """
+
     @staticmethod
     def create_token(
         user_data: dict[str, Any], expires_delta: timedelta | None = None
@@ -63,9 +65,9 @@ class JWTHandler:
             payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
 
             # Check if token has expired
-            if datetime.fromtimestamp(
-                payload.get("exp", 0), tz=UTC
-            ) < datetime.now(UTC):
+            if datetime.fromtimestamp(payload.get("exp", 0), tz=UTC) < datetime.now(
+                UTC
+            ):
                 raise HTTPException(status_code=401, detail="Token expired")
             logger.debug(f"Token payload: {payload}")
             return payload

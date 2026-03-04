@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 class AuthResponse(BaseModel):
     """Response model for authentication containing JWT token and user info.
-    
+
     Attributes:
     ----------
     access_token : str
@@ -34,6 +34,7 @@ class AuthResponse(BaseModel):
     user : UserBase
         The authenticated user's basic information.
     """
+
     access_token: str
     token_type: str = "bearer"
     user: UserBase
@@ -41,21 +42,22 @@ class AuthResponse(BaseModel):
 
 class SignupResponse(BaseModel):
     """Response model for user signup containing the created user information.
-    
+
     Attributes:
     ----------
     user : UserBase
         The newly created user's basic information.
     """
+
     user: UserBase
 
 
 class AuthService:
     """Service class for handling user authentication operations.
-    
+
     Provides methods for Google OAuth2 authentication, user registration,
     and credentials-based authentication with JWT token generation.
-    
+
     Attributes:
     ----------
     user_service : UserService
@@ -63,9 +65,10 @@ class AuthService:
     pwd_context : CryptContext
         Password hashing context using pbkdf2_sha256 algorithm.
     """
+
     def __init__(self, user_service: UserService) -> None:
         """Initialize the AuthService with a UserService instance.
-        
+
         Parameters:
         ----------
         user_service : UserService
@@ -133,19 +136,19 @@ class AuthService:
 
     def register_user(self, email: str, password: str):
         """Register a new user with email and password credentials.
-        
+
         Parameters:
         ----------
         email : str
             The email address for the new user account.
         password : str
             The password for the new user account (will be hashed).
-        
+
         Returns:
         -------
         SignupResponse
             Response containing the newly created user information.
-        
+
         Raises:
         ------
         HTTPException
@@ -164,19 +167,19 @@ class AuthService:
 
     def credentials_authenticate(self, email: str, password: str):
         """Authenticate a user with email and password credentials.
-        
+
         Parameters:
         ----------
         email : str
             The user's email address.
         password : str
             The user's password (will be verified against hashed password).
-        
+
         Returns:
         -------
         AuthResponse
             Response containing the JWT access token and user information.
-        
+
         Raises:
         ------
         HTTPException

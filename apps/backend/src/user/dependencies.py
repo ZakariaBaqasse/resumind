@@ -22,7 +22,7 @@ def get_user_repository(session: Session = Depends(get_session)):
 
 def get_user_service(session: Session = Depends(get_session)) -> UserService:
     """Dependency to get UserService instance.
-    
+
     This ensures that the service is created with the current database session.
     """
     from src.core.service_registry import ServiceRegistry

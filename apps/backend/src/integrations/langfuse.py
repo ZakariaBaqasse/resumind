@@ -3,6 +3,7 @@
 This module initializes Langfuse for tracking and monitoring language model
 interactions through LangChain callbacks.
 """
+
 from langfuse import Langfuse
 from langfuse.langchain import CallbackHandler
 

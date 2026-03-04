@@ -1,0 +1,1 @@
+"""Job applications test package."""

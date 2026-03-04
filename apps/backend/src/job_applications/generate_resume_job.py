@@ -1,3 +1,10 @@
+"""Module for generating customized resumes based on job applications.
+
+This module provides Celery tasks and async functions to orchestrate
+the resume generation workflow for job applications using LangGraph
+and PostgreSQL for checkpointing.
+"""
+
 import asyncio
 import logging
 import os
@@ -16,9 +23,7 @@ db_url = os.environ.get("DATABASE_URL")
     track_started=True,
 )
 def start_resume_generation(self, job_application_id: str):
-    """
-    Given a workflow id, execute the workflow.
-    """
+    """Given a workflow id, execute the workflow."""
     try:
         asyncio.run(start_resume_generation_async(job_application_id))
         return {"job_application_id": job_application_id}
@@ -30,9 +35,7 @@ def start_resume_generation(self, job_application_id: str):
 async def start_resume_generation_async(
     job_application_id: str,
 ):
-    """
-    Given a job application id, start the resume generation.
-    """
+    """Given a job application id, start the resume generation."""
     import psycopg
     from langchain_core.runnables import RunnableConfig
     from langfuse.langchain import CallbackHandler

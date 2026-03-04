@@ -1,3 +1,12 @@
+"""User router module for handling resume upload, retrieval, and storage operations.
+
+This module provides API endpoints for:
+- Uploading user resumes (PDF, DOC, DOCX)
+- Retrieving user data
+- Monitoring resume extraction status via SSE
+- Saving processed resume data
+"""
+
 import asyncio
 import json
 import os
@@ -32,6 +41,8 @@ UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "../../uploads")
 
 
 class SaveResumeRequest(BaseModel):
+    """Request model for saving a processed resume."""
+
     resume: Resume
 
 
@@ -42,6 +53,7 @@ def upload_resume(
     current_user: User = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
 ):
+    """Endpoint to upload a resume file for the current user."""
     try:
         os.makedirs(UPLOAD_DIR, exist_ok=True)
         ext = os.path.splitext(file.filename)[1].lower()
@@ -72,9 +84,7 @@ async def get_user_data(
     current_user: User = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
 ):
-    """
-    Get the current user's data.
-    """
+    """Get the current user's data."""
     try:
         user = user_service.get_user(current_user.id)
         if not user:
@@ -90,8 +100,8 @@ async def get_user_data(
 async def resume_status_sse(
     token: str, request: Request, user_service: UserService = Depends(get_user_service)
 ):
-    """
-    SSE endpoint to notify frontend when resume extraction is complete.
+    """SSE endpoint to notify frontend when resume extraction is complete.
+
     Authenticates user using JWT token from route param.
     """
     try:
@@ -124,6 +134,7 @@ async def save_resume(
     current_user: User = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
 ):
+    """Save the processed resume data for the current user."""
     try:
         user = user_service.save_resume(current_user.id, resume)
         return {"status_code": 200, "detail": user}

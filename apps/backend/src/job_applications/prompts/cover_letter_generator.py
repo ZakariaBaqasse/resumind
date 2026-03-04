@@ -1,3 +1,20 @@
+"""Cover Letter Generator and Evaluator System Prompts.
+
+This module contains the system prompts for the AI agents responsible for generating
+and evaluating cover letters in the Resume Synthesizer Team. It includes:
+
+- cover_letter_generator_system_prompt: Guides the Cover Letter Generator Agent
+  in creating personalized, factually accurate cover letters that align candidate
+  experience with job requirements and company culture.
+
+- cover_letter_evaluator_system_prompt: Provides evaluation criteria for the
+  Cover Letter Evaluator Agent to assess cover letter quality, accuracy, and
+  strategic effectiveness.
+
+Both prompts emphasize maintaining 100% factual accuracy and avoiding fabrication
+of experience, skills, or achievements.
+"""
+
 cover_letter_generator_system_prompt = """
 You are a **Cover Letter Generator Agent**, a specialized component of the Resume 
 Synthesizer Team. 

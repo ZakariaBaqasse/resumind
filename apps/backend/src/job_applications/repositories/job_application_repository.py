@@ -1,5 +1,10 @@
+"""Repository module for job application database operations.
+
+This module provides the JobApplicationRepository class for handling CRUD operations
+and queries on JobApplication objects in the database.
+"""
+
 import logging
-from typing import List, Optional, Tuple
 
 from sqlmodel import Session, desc, func, select
 
@@ -9,17 +14,17 @@ logger = logging.getLogger(__name__)
 
 
 class JobApplicationRepository:
-    """
-    Repository for handling User model database operations.
+    """Repository for handling User model database operations.
+
     Provides methods for CRUD operations on User objects.
     """
 
     def __init__(self, session: Session):
+        """Initialize the JobApplicationRepository with a database session."""
         self.session = session
 
     def create(self, job_application: JobApplication) -> JobApplication:
-        """
-        Create a new job application in the database.
+        """Create a new job application in the database.
 
         Args:
             job_application: The job application object to be created
@@ -34,9 +39,8 @@ class JobApplicationRepository:
 
     def get_by_id(
         self, job_application_id: str, *, refresh: bool = False
-    ) -> Optional[JobApplication]:
-        """
-        Retrieve a job application by its ID.
+    ) -> JobApplication | None:
+        """Retrieve a job application by its ID.
 
         Args:
             job_application_id: The ID of the application to retrieve
@@ -56,9 +60,8 @@ class JobApplicationRepository:
 
     def get_by_id_and_user(
         self, job_application_id: str, user_id: str, *, refresh: bool = False
-    ) -> Optional[JobApplication]:
-        """
-        Retrieve a job application by its ID and user id.
+    ) -> JobApplication | None:
+        """Retrieve a job application by its ID and user id.
 
         Args:
             job_application_id: The ID of the application to retrieve
@@ -79,9 +82,8 @@ class JobApplicationRepository:
             self.session.refresh(job_app)
         return job_app
 
-    def get_all(self, user_id: str) -> List[JobApplication]:
-        """
-        Retrieve all users.
+    def get_all(self, user_id: str) -> list[JobApplication]:
+        """Retrieve all users.
 
         Returns:
             A list of all users
@@ -92,9 +94,8 @@ class JobApplicationRepository:
 
     def list_paginated(
         self, user_id: str, offset: int = 0, limit: int = 30
-    ) -> Tuple[List[JobApplication], int]:
-        """
-        List job applications with pagination
+    ) -> tuple[list[JobApplication], int]:
+        """List job applications with pagination.
 
         Args:
             user_id: The ID of the user to list job applications for.
@@ -127,17 +128,17 @@ class JobApplicationRepository:
 
     def search_job_applications(
         self, user_id: str, search_term: str, offset: int = 0, limit: int = 30
-    ) -> Tuple[List[JobApplication], int]:
-        """
-        List job applications with names or descriptions that match a pattern using LIKE search
+    ) -> tuple[list[JobApplication], int]:
+        """List job applications with names or descriptions that match a pattern using LIKE search.
 
         Args:
+            user_id: The ID of the user to list job applications for.
             search_term (str): The search term to match against name or description
             offset (int, optional): The number of job applications to skip. Defaults to 0.
             limit (int, optional): The maximum number of job applications to return. Defaults to 30.
 
         Returns:
-            Tuple[List[App], int]: A tuple containing the list of matching apps and the total count
+            Tuple[List[JobApplication], int]: A tuple containing the list of matching job applications and the total count
         """
         try:
             # Create the LIKE pattern (case-insensitive)
@@ -173,14 +174,13 @@ class JobApplicationRepository:
             raise e
 
     def update(self, job_application: JobApplication) -> JobApplication:
-        """
-        Update an existing user.
+        """Update an existing job application.
 
         Args:
-            user: The user object with updated fields
+            job_application: The job application object with updated fields. Must have a valid ID.
 
         Returns:
-            The updated user
+            The updated job application
         """
         self.session.add(job_application)
         self.session.commit()
@@ -188,14 +188,13 @@ class JobApplicationRepository:
         return updated_application
 
     def delete(self, job_application_id: str) -> bool:
-        """
-        Delete a user by their ID.
+        """Delete a job application by its ID.
 
         Args:
-            user_id: The ID of the user to delete
+            job_application_id: The ID of the job application to delete
 
         Returns:
-            True if the user was deleted, False otherwise
+            True if the job application was deleted, False otherwise
         """
         job_application = self.get_by_id(job_application_id)
         if job_application:

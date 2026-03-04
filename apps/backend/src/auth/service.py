@@ -1,4 +1,12 @@
-import os
+"""Authentication service module for handling user authentication.
+
+This module provides authentication services including:
+- Google OAuth2 authentication
+- User registration with email and password
+- Credentials-based authentication
+- JWT token generation
+"""
+
 from src.user.service import UserService
 from fastapi import HTTPException, status
 import requests
@@ -6,7 +14,7 @@ from datetime import timedelta
 from src.auth.jwt_handler import JWTHandler
 from src.user.model import UserBase, User
 from pydantic import BaseModel
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import logging
 from passlib.context import CryptContext
 
@@ -15,17 +23,57 @@ logger = logging.getLogger(__name__)
 
 
 class AuthResponse(BaseModel):
+    """Response model for authentication containing JWT token and user info.
+
+    Attributes:
+    ----------
+    access_token : str
+        The JWT access token for authenticated requests.
+    token_type : str
+        The type of token (default is "bearer").
+    user : UserBase
+        The authenticated user's basic information.
+    """
+
     access_token: str
     token_type: str = "bearer"
     user: UserBase
 
 
 class SignupResponse(BaseModel):
+    """Response model for user signup containing the created user information.
+
+    Attributes:
+    ----------
+    user : UserBase
+        The newly created user's basic information.
+    """
+
     user: UserBase
 
 
 class AuthService:
+    """Service class for handling user authentication operations.
+
+    Provides methods for Google OAuth2 authentication, user registration,
+    and credentials-based authentication with JWT token generation.
+
+    Attributes:
+    ----------
+    user_service : UserService
+        Service instance for user management operations.
+    pwd_context : CryptContext
+        Password hashing context using pbkdf2_sha256 algorithm.
+    """
+
     def __init__(self, user_service: UserService) -> None:
+        """Initialize the AuthService with a UserService instance.
+
+        Parameters:
+        ----------
+        user_service : UserService
+            The user service instance for handling user operations.
+        """
         self.user_service = user_service
         self.pwd_context = CryptContext(
             schemes=["pbkdf2_sha256"],
@@ -34,9 +82,7 @@ class AuthService:
         )
 
     def google_authenticate(self, access_token: str):
-        """
-        Verify Google tokens (id_token and access_token) and return our custom JWT
-        """
+        """Verify Google tokens (id_token and access_token) and return our custom JWT."""
         try:
             # Use access token to get user info from Google
             user_info_url = "https://www.googleapis.com/oauth2/v2/userinfo"
@@ -55,7 +101,7 @@ class AuthService:
                     email=google_user["email"],
                     name=google_user.get("name", ""),
                     image=google_user.get("picture", None),
-                    emailVerified=datetime.now(timezone.utc),
+                    emailVerified=datetime.now(UTC),
                 )
 
                 user = self.user_service.create_user(user)
@@ -85,10 +131,29 @@ class AuthService:
             logger.error("Unexpected error during authentication:", e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Unexpected error.",
+                detail="Unexpected error.",
             )
 
     def register_user(self, email: str, password: str):
+        """Register a new user with email and password credentials.
+
+        Parameters:
+        ----------
+        email : str
+            The email address for the new user account.
+        password : str
+            The password for the new user account (will be hashed).
+
+        Returns:
+        -------
+        SignupResponse
+            Response containing the newly created user information.
+
+        Raises:
+        ------
+        HTTPException
+            If a user with the same email already exists.
+        """
         found_user = self.user_service.get_user_by_email(email)
         if found_user:
             raise HTTPException(
@@ -101,6 +166,25 @@ class AuthService:
         return SignupResponse(user=user)
 
     def credentials_authenticate(self, email: str, password: str):
+        """Authenticate a user with email and password credentials.
+
+        Parameters:
+        ----------
+        email : str
+            The user's email address.
+        password : str
+            The user's password (will be verified against hashed password).
+
+        Returns:
+        -------
+        AuthResponse
+            Response containing the JWT access token and user information.
+
+        Raises:
+        ------
+        HTTPException
+            If no user is found with the given email or password is incorrect.
+        """
         user = self.user_service.get_user_by_email(email)
         if not user:
             raise HTTPException(

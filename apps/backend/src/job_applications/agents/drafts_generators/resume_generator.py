@@ -1,13 +1,22 @@
+"""Resume generation agent using LangGraph and LangChain.
+
+This module provides the ResumeGeneratorAgent class which orchestrates
+the process of generating and iteratively improving resumes tailored to
+specific job applications. It uses a multi-step pipeline:
+- Generator: Creates enhanced resume versions based on job descriptions
+- Evaluator: Assesses generated resumes and suggests improvements
+- Finalize: Saves the final resume and initiates cover letter generation
+"""
+
 import logging
 from datetime import date
-from typing import Any, Dict, Optional
+from typing import Any
 
 from langchain_core.messages import (
     HumanMessage,
     SystemMessage,
 )
 from langchain_core.runnables import RunnableConfig
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_mistralai import ChatMistralAI
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
@@ -17,7 +26,7 @@ from pydantic import BaseModel
 
 from src.configs.database_config import get_session_context
 from src.core.constants import (
-    GEMINI_MODEL_NAME,
+    MODEL_NAME,
     STRUCTURED_OUTPUT_MAX_RETRY,
 )
 from src.core.rate_limit_handlers import RateLimiter, retry_with_backoff
@@ -31,41 +40,47 @@ from src.job_applications.types import (
     EventStatus,
     GeneratedResumeEvaluation,
     PipelineStep,
+    ResumeGenerationOutput,
     ResumeGenerationStatus,
+    ResumeStrategyBrief,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class ResumeGeneratorState(BaseModel):
+    """State model for the Resume Generator agent workflow."""
+
     job_application_id: str
     original_resume_snapshot: Resume
     job_role: str
     job_description: str
     company: str
-    research_results: Dict[str, Any]
+    research_results: dict[str, Any]
     max_evaluations: int = 5
     current_evaluation: int = 0
-    generated_resume: Optional[Resume] = None
-    evaluation_results: Optional[GeneratedResumeEvaluation] = None
+    generated_resume: Resume | None = None
+    strategy_brief: ResumeStrategyBrief | None = None
+    evaluation_results: GeneratedResumeEvaluation | None = None
     evaluation_grade_threshold: int = 90
 
 
 class ResumeGeneratorAgent:
+    """Agent class for generating and improving resumes using LangGraph."""
+
     def __init__(
         self,
-        model: Optional[ChatMistralAI] = None,
+        model: ChatMistralAI | None = None,
         debug: bool = False,
         rate_limiter=None,
     ) -> None:
-        self.model = ChatGoogleGenerativeAI(model=GEMINI_MODEL_NAME)
+        """Initialize the ResumeGeneratorAgent."""
+        self.model = model or ChatMistralAI(model=MODEL_NAME, max_tokens=8192)
         self.debug = debug
         self.rate_limiter = RateLimiter(0.5)
 
     def build_graph(self, checkpointer=InMemorySaver()) -> CompiledStateGraph:
-        """
-        Build the graph for the Resume generator agent.
-        """
+        """Build the graph for the Resume generator agent."""
         try:
             builder = StateGraph(ResumeGeneratorState)
 
@@ -82,6 +97,7 @@ class ResumeGeneratorAgent:
             raise e
 
     async def generator(self, state: ResumeGeneratorState, config: RunnableConfig):
+        """Node function for generating an enhanced version of the resume."""
         try:
             with get_session_context() as session:
                 events_service = ServiceRegistry.get_events_service(session)
@@ -121,10 +137,10 @@ class ResumeGeneratorAgent:
                     )
                 )
             async with self.rate_limiter:
-                configured_model = self.model.with_structured_output(Resume).with_retry(
-                    stop_after_attempt=STRUCTURED_OUTPUT_MAX_RETRY
-                )
-                response = await retry_with_backoff(
+                configured_model = self.model.with_structured_output(
+                    ResumeGenerationOutput
+                ).with_retry(stop_after_attempt=STRUCTURED_OUTPUT_MAX_RETRY)
+                response: ResumeGenerationOutput = await retry_with_backoff(
                     lambda: configured_model.ainvoke(messages)
                 )
             with get_session_context() as session:
@@ -137,11 +153,18 @@ class ResumeGeneratorAgent:
                     data={
                         "iteration": state.current_evaluation,
                         "max_iterations": state.max_evaluations,
+                        "strategy_brief": response.strategy_brief.model_dump(),
                     },
                 )
 
             logger.debug("RESPONSE FROM RESUME GENERATOR: ", response=response)
-            return Command(goto="evaluator", update={"generated_resume": response})
+            return Command(
+                goto="evaluator",
+                update={
+                    "generated_resume": response.resume,
+                    "strategy_brief": response.strategy_brief,
+                },
+            )
         except Exception as e:
             with get_session_context() as session:
                 job_application_service = ServiceRegistry.get_job_application_service(
@@ -167,6 +190,7 @@ class ResumeGeneratorAgent:
             raise e
 
     async def evaluator(self, state: ResumeGeneratorState, config: RunnableConfig):
+        """Node function for evaluating the generated resume."""
         try:
             if state.current_evaluation >= state.max_evaluations:
                 return Command(goto="finalize_generation")
@@ -267,6 +291,7 @@ class ResumeGeneratorAgent:
     async def finalize_generation(
         self, state: ResumeGeneratorState, config: RunnableConfig
     ):
+        """Node function for finalizing the resume generation process."""
         try:
             with get_session_context() as session:
                 job_application_service = ServiceRegistry.get_job_application_service(
@@ -276,6 +301,10 @@ class ResumeGeneratorAgent:
                 job_application_service.save_generated_resume(
                     state.job_application_id, state.generated_resume
                 )
+                if state.strategy_brief:
+                    job_application_service.save_resume_strategy_brief(
+                        state.job_application_id, state.strategy_brief
+                    )
                 events_service.emit_pipeline_step(
                     job_application_id=state.job_application_id,
                     step=PipelineStep.RESUME_GENERATION,

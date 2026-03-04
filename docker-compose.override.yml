@@ -1,0 +1,75 @@
+# Automatically merged by Docker Compose for local development.
+# Used by: docker compose watch
+# NOT read by Dokploy (it only uses docker-compose.yaml).
+
+services:
+  web:
+    build:
+      target: dev
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      - WATCHPACK_POLLING=true
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/web/app
+          target: /app/app
+        - action: sync
+          path: ./apps/web/components
+          target: /app/components
+        - action: sync
+          path: ./apps/web/hooks
+          target: /app/hooks
+        - action: sync
+          path: ./apps/web/lib
+          target: /app/lib
+        - action: sync
+          path: ./apps/web/public
+          target: /app/public
+        - action: sync
+          path: ./apps/web/schema
+          target: /app/schema
+        - action: sync
+          path: ./apps/web/store
+          target: /app/store
+        - action: sync
+          path: ./apps/web/types
+          target: /app/types
+        - action: sync+restart
+          path: ./apps/web/next.config.ts
+          target: /app/next.config.ts
+        - action: sync+restart
+          path: ./apps/web/tailwind.config.ts
+          target: /app/tailwind.config.ts
+        - action: sync+restart
+          path: ./apps/web/postcss.config.mjs
+          target: /app/postcss.config.mjs
+        - action: rebuild
+          path: ./apps/web/package.json
+        - action: rebuild
+          path: ./apps/web/pnpm-lock.yaml
+
+  backend-server:
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/backend/src
+          target: /app/src
+        - action: sync+restart
+          path: ./apps/backend/migrations
+          target: /app/migrations
+        - action: rebuild
+          path: ./apps/backend/pyproject.toml
+        - action: rebuild
+          path: ./apps/backend/uv.lock
+
+  celery-worker:
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/backend/src
+          target: /app/src
+        - action: rebuild
+          path: ./apps/backend/pyproject.toml
+        - action: rebuild
+          path: ./apps/backend/uv.lock

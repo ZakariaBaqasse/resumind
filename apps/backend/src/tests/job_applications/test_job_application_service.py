@@ -1,6 +1,14 @@
+"""Unit tests for job application service.
+
+This module contains tests for the JobApplicationService class, including:
+- Updating company profile discovery results
+- Updating company profile research plans
+- Updating company profile research results
+- Listing paginated job applications
+"""
+
 import pytest
 import uuid
-from src.job_applications.services import job_application_service
 from src.user.model import User
 from src.configs.database_config import get_session_context
 from src.core.service_registry import ServiceRegistry
@@ -14,7 +22,7 @@ from src.job_applications.types import (
 
 @pytest.fixture
 def test_discovered_company_profile():
-    """Fixture to create a test DiscoveredCompanyProfile"""
+    """Fixture to create a test DiscoveredCompanyProfile."""
     return DiscoveredCompanyProfile(
         company_name="TechCorp Solutions Inc.",
         official_website="https://techcorp-solutions.com",
@@ -52,6 +60,7 @@ def test_discovered_company_profile():
 
 @pytest.fixture
 def test_research_plan():
+    """Fixture to create a test ResearchPlan."""
     return ResearchPlan(
         target_role="role",
         research_categories=[
@@ -68,7 +77,7 @@ def test_research_plan():
 
 @pytest.fixture
 def test_user():
-    """Fixture to create a test user"""
+    """Fixture to create a test user."""
     with get_session_context() as session:
         test_user = User(
             id=str(uuid.uuid4()), email="test@example.com", name="Test User"
@@ -83,7 +92,7 @@ def test_user():
 
 @pytest.fixture
 def test_job_application(test_user):
-    """Fixture to create a test job_application"""
+    """Fixture to create a test job_application."""
     with get_session_context() as session:
         test_job_application = JobApplication(
             job_description="description",
@@ -102,6 +111,7 @@ def test_job_application(test_user):
 def test_update_company_profile_research_plan(
     test_job_application, test_discovered_company_profile
 ):
+    """Test updating the company profile research plan for a job application."""
     with get_session_context() as session:
         ###Arrange
         job_application_service = ServiceRegistry.get_job_application_service(session)
@@ -137,6 +147,7 @@ def test_update_company_profile_research_plan(
 def test_update_company_profile_research_results(
     test_job_application, test_research_plan
 ):
+    """Test updating the company profile research results for a job application."""
     with get_session_context() as session:
         ###Arrange
         job_application_service = ServiceRegistry.get_job_application_service(session)
@@ -159,6 +170,7 @@ def test_update_company_profile_research_results(
 
 
 def test_list_paginated_job_applications():
+    """Test listing paginated job applications."""
     with get_session_context() as session:
         job_application_service = ServiceRegistry.get_job_application_service(session)
         paginated_results = job_application_service.list_paginated(

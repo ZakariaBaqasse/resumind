@@ -1,44 +1,74 @@
+"""Company Discovery Agent module.
+
+This module implements an agentic workflow for discovering and profiling companies
+using web search and company information tools. It utilizes LangGraph for orchestration
+and LLM-based reasoning to gather comprehensive company information.
+"""
+
 import asyncio
-import operator
 import logging
-from typing import Dict, Any, Annotated, List, Optional
+import operator
 from datetime import date
-from pydantic import BaseModel
-from langchain_mistralai import ChatMistralAI
-from langgraph.checkpoint.memory import InMemorySaver
-from langgraph.graph import START, END, StateGraph
-from langgraph.graph.state import CompiledStateGraph
-from langgraph.types import Command
+from typing import Annotated, Any
+
 from langchain_core.messages import (
+    BaseMessage,
     HumanMessage,
     SystemMessage,
     ToolMessage,
-    BaseMessage,
 )
+from langchain_mistralai import ChatMistralAI
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.graph import END, START, StateGraph
+from langgraph.graph.state import CompiledStateGraph
+from langgraph.types import Command
+from pydantic import BaseModel
 
 from src.configs.database_config import get_session_context
-from src.job_applications.types import (
-    DiscoveredCompanyProfile,
-    EventStatus,
-    PipelineStep,
-)
+from src.core.constants import MODEL_NAME
+from src.core.rate_limit_handlers import RateLimiter, retry_with_backoff
+from src.core.service_registry import ServiceRegistry
 from src.job_applications.prompts.company_profiler import (
     company_discovery_system_prompt,
 )
 from src.job_applications.tools import (
+    CompanyDiscoveryDoneTool,
     company_discovery_tool,
     tavily_tool,
-    CompanyDiscoveryDoneTool,
 )
-from src.core.constants import MODEL_NAME
-from src.core.rate_limit_handlers import RateLimiter, retry_with_backoff
-from src.core.service_registry import ServiceRegistry
-from src.job_applications.types import ResumeGenerationStatus
+from src.job_applications.types import (
+    DiscoveredCompanyProfile,
+    EventStatus,
+    PipelineStep,
+    ResumeGenerationStatus,
+)
 
 logger = logging.getLogger(__name__)
 
 
 class CompanyDiscoveryAgentState(BaseModel):
+    """State model for the company discovery agent workflow.
+
+    Attributes:
+    ----------
+    job_application_id : str
+        The unique identifier for the job application.
+    company : str
+        The name of the company to discover information about.
+    job_role : str
+        The job role being applied for.
+    job_description : str
+        The description of the job position.
+    company_discovery_results : DiscoveredCompanyProfile
+        The discovered company profile information (optional).
+    iteration : int
+        Current iteration count in the discovery workflow.
+    max_iterations : int
+        Maximum number of iterations allowed for discovery.
+    messages : Annotated[list[BaseMessage], operator.add]
+        List of messages in the agent conversation.
+    """
+
     job_application_id: str
     company: str
     job_role: str
@@ -46,21 +76,78 @@ class CompanyDiscoveryAgentState(BaseModel):
     company_discovery_results: DiscoveredCompanyProfile = None
     iteration: int = 0
     max_iterations: int = 7
-    messages: Annotated[List[BaseMessage], operator.add]
+    messages: Annotated[list[BaseMessage], operator.add]
 
 
 class CompanyDiscoveryAgent:
+    """Agent for discovering and profiling companies using web search and company information tools.
+
+    This agent orchestrates a workflow using LangGraph to gather comprehensive company information
+    through web searches and company discovery tools, leveraging LLM-based reasoning.
+
+    Attributes:
+    ----------
+    model : ChatMistralAI
+        The language model instance used for reasoning and tool invocation.
+    debug : bool
+        Flag to enable debug mode for logging.
+    rate_limiter : RateLimiter
+        Rate limiter to control API call frequency.
+
+    Methods:
+    -------
+    build_graph(checkpointer) -> CompiledStateGraph
+        Constructs and compiles the agent's state graph workflow.
+    plan_research(state: CompanyDiscoveryAgentState)
+        Plans and executes the research phase of company discovery.
+    call_tool(state: CompanyDiscoveryAgentState)
+        Executes tool calls in response to the model's requests.
+    process_tool_call_safely(tool_call: dict, job_application_id: str)
+        Safely processes individual tool calls with error handling.
+    """
+
     def __init__(
         self,
-        model: Optional[ChatMistralAI] = None,
+        model: ChatMistralAI | None = None,
         debug: bool = False,
         rate_limiter=None,
     ):
+        """Initialize the CompanyDiscoveryAgent.
+
+        Parameters:
+        ----------
+        model : ChatMistralAI | None
+            The language model instance for reasoning. Defaults to ChatMistralAI with MODEL_NAME.
+        debug : bool
+            Flag to enable debug mode for logging. Defaults to False.
+        rate_limiter : RateLimiter | None
+            Rate limiter to control API call frequency. Defaults to RateLimiter with 1.0 calls per second.
+        """
         self.model = model or ChatMistralAI(model=MODEL_NAME, max_tokens=8192)
         self.debug = debug
         self.rate_limiter = rate_limiter or RateLimiter(1.0)
 
     def build_graph(self, checkpointer=InMemorySaver()) -> CompiledStateGraph:
+        """Build and compile the company discovery agent's state graph.
+
+        Constructs a state graph workflow with nodes for planning research and calling tools,
+        establishing the control flow between them.
+
+        Parameters
+        ----------
+        checkpointer : object, optional
+            The checkpointer to use for persisting graph state. Defaults to InMemorySaver().
+
+        Returns:
+        -------
+        CompiledStateGraph
+            The compiled state graph ready for execution.
+
+        Raises:
+        ------
+        Exception
+            If an error occurs during graph construction or compilation.
+        """
         try:
             builder = StateGraph(CompanyDiscoveryAgentState)
             builder.add_node("plan_research", self.plan_research)
@@ -73,6 +160,16 @@ class CompanyDiscoveryAgent:
             raise e
 
     async def plan_research(self, state: CompanyDiscoveryAgentState):
+        """Plan and execute one company-discovery reasoning iteration.
+
+        Args:
+            state: The current workflow state containing iteration counters,
+                messages, and job application context.
+
+        Returns:
+            A LangGraph command that either transitions to tool execution,
+            loops for additional reasoning, or ends the workflow with results.
+        """
         try:
             if state.iteration >= state.max_iterations:
                 return Command(
@@ -197,6 +294,16 @@ class CompanyDiscoveryAgent:
             raise e
 
     async def call_tool(self, state: CompanyDiscoveryAgentState):
+        """Execute all tool calls requested by the latest model response.
+
+        Args:
+            state: The current workflow state whose last message contains tool
+                calls.
+
+        Returns:
+            A state update containing successful and failed tool response
+            messages.
+        """
         try:
             tool_responses = await asyncio.gather(
                 *[
@@ -234,8 +341,19 @@ class CompanyDiscoveryAgent:
             raise e
 
     async def process_tool_call_safely(
-        self, tool_call: Dict[str, Any], job_application_id: str
+        self, tool_call: dict[str, Any], job_application_id: str
     ):
+        """Run a single tool call with resilient error handling and event logging.
+
+        Args:
+            tool_call: Tool invocation payload emitted by the model.
+            job_application_id: Identifier used to associate tool execution
+                events with a job application.
+
+        Returns:
+            A success or error tool message suitable for appending to graph
+            state.
+        """
         try:
             tools = [tavily_tool, company_discovery_tool]
             tool_to_invoke = next(

@@ -1,6 +1,12 @@
+"""User service module for handling user-related business logic.
+
+This module provides:
+- UserService: Main service class for user operations including registration,
+  retrieval, deletion, and resume extraction/processing.
+"""
+
 import os
 from logging import getLogger
-from typing import List, Optional
 
 from fastapi import HTTPException
 from langchain_community.document_loaders import PDFPlumberLoader
@@ -19,17 +25,17 @@ logger = getLogger(__name__)
 
 
 class UserService:
-    """
-    Service for handling user-related business logic.
+    """Service for handling user-related business logic.
+
     Uses UserRepository for data access and adds business logic layer.
     """
 
     def __init__(self, user_repository: UserRepository):
+        """Initialize the UserService with a UserRepository instance."""
         self.user_repository = user_repository
 
     def create_user(self, user_data: User) -> User:
-        """
-        Register a new user with validation.
+        """Register a new user with validation.
 
         Args:
             user_data: User data to register
@@ -40,9 +46,8 @@ class UserService:
         # Create the new user
         return self.user_repository.create(user_data)
 
-    def get_user(self, user_id: str) -> Optional[User]:
-        """
-        Get a user by ID.
+    def get_user(self, user_id: str) -> User | None:
+        """Get a user by ID.
 
         Args:
             user_id: The ID of the user to retrieve
@@ -52,9 +57,8 @@ class UserService:
         """
         return self.user_repository.get_by_id(user_id)
 
-    def get_user_by_email(self, email: str) -> Optional[User]:
-        """
-        Get a user by email.
+    def get_user_by_email(self, email: str) -> User | None:
+        """Get a user by email.
 
         Args:
             email: The email of the user to retrieve
@@ -64,9 +68,8 @@ class UserService:
         """
         return self.user_repository.get_by_email(email)
 
-    def list_users(self) -> List[User]:
-        """
-        List all users.
+    def list_users(self) -> list[User]:
+        """List all users.
 
         Returns:
             A list of all users
@@ -74,8 +77,7 @@ class UserService:
         return self.user_repository.get_all()
 
     def delete_user(self, user_id: str) -> bool:
-        """
-        Delete a user account.
+        """Delete a user account.
 
         Args:
             user_id: The ID of the user to delete
@@ -86,6 +88,7 @@ class UserService:
         return self.user_repository.delete(user_id)
 
     def save_resume(self, user_id: str, resume: Resume):
+        """Save the processed resume data for a user."""
         try:
             user = self.get_user(user_id)
             if not user:
@@ -104,6 +107,7 @@ class UserService:
             raise HTTPException(status_code=500, detail=message)
 
     async def extract_initial_resume(self, save_path: str, user_id: str) -> None:
+        """Extract initial resume content for a user."""
         try:
             loader = PDFPlumberLoader(save_path)
             docs = loader.load()

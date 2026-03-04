@@ -1,3 +1,9 @@
+"""Authentication dependencies for FastAPI application.
+
+This module provides dependency injection functions for authentication services
+and current user retrieval using JWT tokens.
+"""
+
 import logging
 
 from fastapi import Depends, HTTPException, status
@@ -15,7 +21,7 @@ logger = logging.getLogger(__name__)
 def get_auth_service(
     user_service: UserService = Depends(get_user_service),
 ) -> AuthService:
-    """Dependency to get AuthService instance"""
+    """Dependency to get AuthService instance."""
     return AuthService(user_service)
 
 
@@ -27,6 +33,26 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     user_service: UserService = Depends(get_user_service),
 ):
+    """Get the current authenticated user from JWT token.
+
+    Parameters
+    ----------
+    token : str
+        JWT token from the Authorization header.
+    user_service : UserService
+        User service dependency for database operations.
+
+    Returns:
+    -------
+    User
+        The authenticated user object.
+
+    Raises:
+    ------
+    HTTPException
+        If the token is invalid, credentials cannot be validated,
+        or the user is not found.
+    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

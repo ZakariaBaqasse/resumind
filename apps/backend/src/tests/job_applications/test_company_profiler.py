@@ -1,13 +1,19 @@
+"""Tests for company profiler agents and related functionality.
+
+This module contains unit tests for:
+- CompanyProfilerAgent: orchestrates the company profiling workflow
+- CompanyDiscoveryAgent: discovers and profiles companies
+- ResearchExecutor: executes research on discovered companies
+"""
+
 import asyncio
 import pytest
 import uuid
 from langfuse.langchain import CallbackHandler
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph.state import CompiledStateGraph
-from langgraph.checkpoint.memory import InMemorySaver
 
 from src.configs.database_config import get_session_context
-from src.core.service_registry import ServiceRegistry
 
 from src.job_applications.agents.company_profiler_agents.company_profiler import (
     CompanyProfilerAgent,
@@ -38,7 +44,7 @@ from src.job_applications.types import (
     ResearchDifficulty,
 )
 from src.user.model import User
-from src.job_applications.model import JobApplication, Event
+from src.job_applications.model import JobApplication
 
 TEST_COMPANY_NAME = "Lumenalta"
 TEST_JOB_ROLE = "Javascript Fullstack Engineer - Senior"
@@ -83,7 +89,7 @@ If you’re a passionate, career-focused developer ready to make a lasting impac
 
 @pytest.fixture
 def test_user():
-    """Fixture to create a test user"""
+    """Fixture to create a test user."""
     with get_session_context() as session:
         test_user = User(
             id=str(uuid.uuid4()), email="test@example.com", name="Test User"
@@ -98,7 +104,7 @@ def test_user():
 
 @pytest.fixture
 def test_job_application(test_user):
-    """Fixture to create a test job_application"""
+    """Fixture to create a test job_application."""
     with get_session_context() as session:
         test_job_application = JobApplication(
             job_description=TEST_JOB_DESCRIPTION,
@@ -115,6 +121,7 @@ def test_job_application(test_user):
 
 
 def test_company_profiler_agent(test_job_application):
+    """Test the CompanyProfilerAgent with a sample job application."""
     input_state = CompanyProfilerState(
         job_application_id=test_job_application.id,
         job_role=test_job_application.job_title,
@@ -132,6 +139,7 @@ def test_company_profiler_agent(test_job_application):
 
 
 def test_company_discovery_agent():
+    """Test the CompanyDiscoveryAgent with a sample company."""
     company_discovery_agent = CompanyDiscoveryAgent()
     graph: CompiledStateGraph = company_discovery_agent.build_graph()
     configurable = {
@@ -252,6 +260,7 @@ test_category_6 = ResearchCategory(
 
 
 def test_research_executor_agent():
+    """Test the ResearchExecutor with sample company discovery results and a research category."""
     research_executor = ResearchExecutor()
     graph: CompiledStateGraph = research_executor.build_graph()
     configurable = {

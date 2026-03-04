@@ -1,8 +1,16 @@
+"""Service for emitting and querying job application events.
+
+This module provides the EventService class for managing event operations,
+including emitting various types of events (pipeline steps, research categories,
+tool executions, artifacts) and querying events with filtering capabilities.
+Events are stored as enums converted to strings for database flexibility.
+"""
+
 from __future__ import annotations
 
 from logging import getLogger
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.job_applications.model import Event
 from src.job_applications.repositories.events_repository import EventRepository
@@ -12,12 +20,13 @@ logger = getLogger(__name__)
 
 
 class EventService:
-    """
-    Business logic for emitting and retrieving events linked to job applications.
+    """Business logic for emitting and retrieving events linked to job applications.
+
     Stores enum values as strings in the DB for flexibility.
     """
 
     def __init__(self, event_repository: EventRepository):
+        """Initialize the EventService with an EventRepository instance."""
         self.event_repository = event_repository
 
     # Generic emitter
@@ -26,15 +35,16 @@ class EventService:
         *,
         job_application_id: str,
         event_name: EventName,
-        status: Optional[EventStatus] = None,
-        step: Optional[PipelineStep | str] = None,
-        category_name: Optional[str] = None,
-        tool_name: Optional[str] = None,
-        iteration: Optional[int] = None,
-        message: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
-        error: Optional[Dict[str, Any]] = None,
+        status: EventStatus | None = None,
+        step: PipelineStep | str | None = None,
+        category_name: str | None = None,
+        tool_name: str | None = None,
+        iteration: int | None = None,
+        message: str | None = None,
+        data: dict[str, Any] | None = None,
+        error: dict[str, Any] | None = None,
     ) -> Event:
+        """Emit a generic event for a job application."""
         try:
             evt = Event(
                 job_application_id=job_application_id,
@@ -60,11 +70,12 @@ class EventService:
         job_application_id: str,
         step: PipelineStep,
         status: EventStatus,
-        message: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
-        error: Optional[Dict[str, Any]] = None,
-        iteration: Optional[int] = None,
+        message: str | None = None,
+        data: dict[str, Any] | None = None,
+        error: dict[str, Any] | None = None,
+        iteration: int | None = None,
     ) -> Event:
+        """Emit a pipeline step event for a job application."""
         return self.emit_event(
             job_application_id=job_application_id,
             event_name=EventName.PIPELINE_STEP,
@@ -82,11 +93,12 @@ class EventService:
         job_application_id: str,
         category_name: str,
         status: EventStatus,
-        iteration: Optional[int] = None,
-        message: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
-        error: Optional[Dict[str, Any]] = None,
+        iteration: int | None = None,
+        message: str | None = None,
+        data: dict[str, Any] | None = None,
+        error: dict[str, Any] | None = None,
     ) -> Event:
+        """Emit a research category event for a job application."""
         return self.emit_event(
             job_application_id=job_application_id,
             event_name=EventName.RESEARCH_CATEGORY,
@@ -105,12 +117,13 @@ class EventService:
         job_application_id: str,
         tool_name: str,
         status: EventStatus,
-        message: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
-        error: Optional[Dict[str, Any]] = None,
-        step: Optional[PipelineStep | str] = PipelineStep.RESEARCH,
-        iteration: Optional[int] = None,
+        message: str | None = None,
+        data: dict[str, Any] | None = None,
+        error: dict[str, Any] | None = None,
+        step: PipelineStep | str | None = PipelineStep.RESEARCH,
+        iteration: int | None = None,
     ) -> Event:
+        """Emit a tool execution event for a job application."""
         return self.emit_event(
             job_application_id=job_application_id,
             event_name=EventName.TOOL_EXECUTION,
@@ -128,12 +141,13 @@ class EventService:
         *,
         job_application_id: str,
         artifact_type: str,
-        summary: Optional[str] = None,
-        preview_ref: Optional[str] = None,
-        message: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
-        step: Optional[PipelineStep | str] = None,
+        summary: str | None = None,
+        preview_ref: str | None = None,
+        message: str | None = None,
+        data: dict[str, Any] | None = None,
+        step: PipelineStep | str | None = None,
     ) -> Event:
+        """Emit an artifact generated event for a job application."""
         payload = {
             "artifact_type": artifact_type,
             **({"summary": summary} if summary else {}),
@@ -153,9 +167,10 @@ class EventService:
         self,
         *,
         job_application_id: str,
-        message: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
+        message: str | None = None,
+        data: dict[str, Any] | None = None,
     ) -> Event:
+        """Emit a pipeline completed event for a job application."""
         return self.emit_event(
             job_application_id=job_application_id,
             event_name=EventName.PIPELINE_COMPLETED,
@@ -168,10 +183,11 @@ class EventService:
         self,
         *,
         job_application_id: str,
-        message: Optional[str] = None,
-        error: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
+        message: str | None = None,
+        error: dict[str, Any] | None = None,
+        data: dict[str, Any] | None = None,
     ) -> Event:
+        """Emit a pipeline failed event for a job application."""
         return self.emit_event(
             job_application_id=job_application_id,
             event_name=EventName.PIPELINE_FAILED,
@@ -185,10 +201,11 @@ class EventService:
         self,
         *,
         job_application_id: str,
-        message: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
-        step: Optional[PipelineStep | str] = None,
+        message: str | None = None,
+        data: dict[str, Any] | None = None,
+        step: PipelineStep | str | None = None,
     ) -> Event:
+        """Emit a pipeline update event for a job application."""
         return self.emit_event(
             job_application_id=job_application_id,
             event_name=EventName.PIPELINE_UPDATE,
@@ -203,17 +220,18 @@ class EventService:
         self,
         job_application_id: str,
         *,
-        event_name: Optional[EventName | str] = None,
-        step: Optional[PipelineStep | str] = None,
-        status: Optional[EventStatus | str] = None,
-        category_name: Optional[str] = None,
-        tool_name: Optional[str] = None,
-        since: Optional[datetime] = None,
-        until: Optional[datetime] = None,
+        event_name: EventName | str | None = None,
+        step: PipelineStep | str | None = None,
+        status: EventStatus | str | None = None,
+        category_name: str | None = None,
+        tool_name: str | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
         limit: int = 200,
         offset: int = 0,
         ascending: bool = True,
-    ) -> List[Event]:
+    ) -> list[Event]:
+        """List events for a job application with optional filtering and pagination."""
         return self.event_repository.list_events(
             job_application_id=job_application_id,
             event_name=(
@@ -232,11 +250,13 @@ class EventService:
 
     def latest_for_step(
         self, job_application_id: str, step: PipelineStep
-    ) -> Optional[Event]:
+    ) -> Event | None:
+        """Get the latest event for a specific pipeline step of a job application."""
         return self.event_repository.get_latest_by_step(
             job_application_id=job_application_id,
             step=step.value,
         )
 
     def clear_events(self, job_application_id: str) -> int:
+        """Clear all events for a job application."""
         return self.event_repository.delete_by_job_application(job_application_id)

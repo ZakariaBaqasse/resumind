@@ -1,3 +1,12 @@
+"""Celery application configuration and initialization.
+
+This module sets up the Celery distributed task queue with:
+- Broker configuration (Redis)
+- Result backend configuration (PostgreSQL)
+- Task routing and concurrency settings
+- Task failure handlers and logging
+"""
+
 import json
 import logging
 import os
@@ -7,8 +16,6 @@ from celery.signals import (
     task_failure,
 )
 
-import src.job_applications.model
-import src.user.model
 
 logger = logging.getLogger(__name__)
 
@@ -148,27 +155,8 @@ app.conf.update(
 # Task failure handler with better error reporting
 @task_failure.connect
 def on_task_failure(sender=None, task_id=None, exception=None, einfo=None, **kwargs):
+    """Handle task failure events and log detailed error information."""
     logger.error("Task failed", task_id=task_id, exception=str(exception))
-
-
-# @worker_process_init.connect
-# def configure_worker(**kwargs):
-#     worker_id = f"worker-{os.getpid()}"
-#     structlog.contextvars.bind_contextvars(worker_id=worker_id)
-#     logger.info("Celery worker initialized", worker_id=worker_id)
-
-
-# # Add task middleware for adding task_id to all logs within a task context
-# @task_prerun.connect
-# def on_task_prerun(task_id, task, args, kwargs, **_):
-#     structlog.contextvars.bind_contextvars(task_id=task_id, task_name=task.name)
-#     logger.info("Task started", task_name=task.name, task_id=task_id)
-
-
-# @task_postrun.connect
-# def on_task_postrun(task_id, task, args, kwargs, retval, state, **_):
-#     logger.info("Task completed", task_name=task.name, task_id=task_id, state=state)
-#     structlog.contextvars.clear_contextvars()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,12 @@
+"""Tools for job application assistance using LangChain and external APIs.
+
+This module provides tools for:
+- company_discovery_tool: Multi-stage company discovery with web search
+- scraping_tool: Intelligent web scraping and content summarization
+"""
+
 import logging
 import os
-from typing import Dict, List
 
 from langchain_core.tools import tool
 from langchain_tavily import TavilySearch
@@ -24,8 +30,8 @@ else:
 
 @tool
 async def company_discovery_tool(company_name: str, additional_context: str = ""):
-    """
-    Multi-stage company discovery that tries different search strategies
+    """Multi-stage company discovery that tries different search strategies.
+
     to find the official website and basic company information.
     """
     if not tavily_tool:
@@ -62,10 +68,8 @@ async def company_discovery_tool(company_name: str, additional_context: str = ""
 
 
 @tool
-async def scraping_tool(url: str, data_to_extract: List[str]):
-    """
-    Intelligently scrapes content from a given URL and summarizes it,
-    emphasizing specific data points to extract using an LLM.
+async def scraping_tool(url: str, data_to_extract: list[str]):
+    """Intelligently scrapes content from a given URL and summarizes it emphasizing specific data points to extract using an LLM.
 
     Args:
         url (str): The URL of the web page to scrape.
@@ -100,8 +104,12 @@ async def scraping_tool(url: str, data_to_extract: List[str]):
 
 
 class ResearchDoneTool(BaseModel):
-    results: Dict[str, str]
+    """Model representing the results of a research tool."""
+
+    results: dict[str, str]
 
 
 class CompanyDiscoveryDoneTool(BaseModel):
+    """Model representing the results of a company discovery tool."""
+
     discovery_results: DiscoveredCompanyProfile

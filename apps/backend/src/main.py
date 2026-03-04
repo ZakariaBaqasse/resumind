@@ -1,3 +1,9 @@
+"""Main FastAPI application module.
+
+This module sets up the FastAPI application with CORS middleware and includes
+routers for authentication, user management, and job applications.
+"""
+
 import logging
 import os
 
@@ -5,8 +11,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.auth.router import auth_router
-from src.user.router import user_router
 from src.job_applications.router import job_application_router
+from src.user.router import user_router
 
 # Configure logging
 logging.basicConfig(
@@ -22,7 +28,7 @@ app = FastAPI(title="Template API", version="0.0.1")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        os.environ.get("FRONTEND_URL", "http://localhost:3000")
+        os.environ.get("FRONTEND_URL", "http://localhost:3003")
     ],  # Frontend URLs
     allow_credentials=True,
     allow_methods=["*"],
@@ -38,5 +44,4 @@ app.include_router(job_application_router)
 @app.get("/health", tags=["Health"])
 def status_check() -> dict[str, str]:
     """A basic function to perform a status check on the API."""
-
     return {"status": "ok", "version": "0.0.1"}

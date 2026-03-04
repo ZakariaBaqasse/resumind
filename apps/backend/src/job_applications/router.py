@@ -1,8 +1,19 @@
+"""Job applications router module.
+
+This module provides API endpoints for managing job applications and resume generation:
+- Create and start resume generation for job applications
+- List and search job applications with pagination
+- Stream real-time updates via Server-Sent Events (SSE)
+- Update generated resumes and cover letters
+- Retrieve job application statistics
+- Delete job applications
+"""
+
 import asyncio
 import json
 import os
 from logging import getLogger
-from typing import List, Dict, Any
+from typing import Any
 
 from fastapi import (
     APIRouter,
@@ -14,19 +25,19 @@ from fastapi import (
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from src.core.types import Resume
 from src.auth.dependencies import get_current_user
+from src.core.types import Resume
 from src.job_applications.dependencies import get_job_application_service
+from src.job_applications.generate_resume_job import start_resume_generation
+from src.job_applications.model import JobApplication
 from src.job_applications.services.job_application_service import JobApplicationService
-from src.user.model import User
 from src.job_applications.types import (
     CreateJobApplicationRequest,
     JobApplicationPreview,
     ResumeGenerationStatus,
 )
-from src.job_applications.model import JobApplication
-from src.job_applications.generate_resume_job import start_resume_generation
 from src.user.dependencies import get_user_service
+from src.user.model import User
 from src.user.service import UserService
 
 logger = getLogger(__name__)
@@ -39,7 +50,9 @@ UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "../../uploads")
 
 
 class PaginatedJobApplicationsResponse(BaseModel):
-    items: List[JobApplicationPreview]
+    """Response model for paginated job applications list."""
+
+    items: list[JobApplicationPreview]
     total: int
     has_next: bool
 
@@ -52,6 +65,11 @@ def start_application_resume_generation(
         get_job_application_service
     ),
 ):
+    """Create a new job application and start the resume generation process.
+
+    This endpoint creates a new job application record and triggers the asynchronous
+    resume generation workflow via a Celery task.
+    """
     try:
         job_application = job_application_service.create_job_application(
             JobApplication(
@@ -93,8 +111,9 @@ async def list_job_applications(
         get_job_application_service
     ),
 ):
-    """
-    Get a paginated list of job applications
+    """Get a paginated list of job applications for the current user.
+
+    Supports pagination via offset and limit query parameters.
     """
     try:
         job_applications, total = job_application_service.list_paginated(
@@ -124,8 +143,8 @@ async def search_job_applications(
         get_job_application_service
     ),
 ):
-    """
-    Search for job applications with comprehensive filtering support
+    """Search for job applications with comprehensive filtering support.
+
     Supports filtering by:
     - search_term: matches app name or description
     """
@@ -158,8 +177,8 @@ async def application_snapshot_sse(
     poll_interval_ms: int = 1000,
     events_limit: int = 200,
 ):
-    """
-    SSE stream of the full JobApplication snapshot (including related events).
+    """SSE stream of the full JobApplication snapshot (including related events).
+
     Sends a new frame on every poll to ensure real-time updates.
     """
     try:
@@ -176,7 +195,7 @@ async def application_snapshot_sse(
             status_code=403, detail="Not authorized for this application"
         )
 
-    def _serialize_event(ev) -> Dict[str, Any]:
+    def _serialize_event(ev) -> dict[str, Any]:
         return {
             "id": ev.id,
             "job_application_id": ev.job_application_id,
@@ -192,7 +211,7 @@ async def application_snapshot_sse(
             "created_at": ev.created_at.isoformat() if ev.created_at else None,
         }
 
-    def _serialize_job_application(app: JobApplication) -> Dict[str, Any]:
+    def _serialize_job_application(app: JobApplication) -> dict[str, Any]:
         # Sort events ascending; apply limit to the most recent ones to keep payload reasonable
         evs = app.events or []
         if events_limit and len(evs) > events_limit:
@@ -209,6 +228,7 @@ async def application_snapshot_sse(
             ),
             "company_profile": app.company_profile,
             "generated_resume": app.generated_resume,
+            "resume_strategy_brief": app.resume_strategy_brief,
             "original_resume_snapshot": app.original_resume_snapshot,
             "generated_cover_letter": app.generated_cover_letter,
             "created_at": app.created_at.isoformat() if app.created_at else None,
@@ -216,7 +236,7 @@ async def application_snapshot_sse(
             "events": [_serialize_event(e) for e in evs],
         }
 
-    def _format_sse(evt_id: str, payload: Dict[str, Any]) -> str:
+    def _format_sse(evt_id: str, payload: dict[str, Any]) -> str:
         return f"id: {evt_id}\nevent: application.snapshot\ndata: {json.dumps(payload, default=str)}\n\n"
 
     async def event_generator():
@@ -305,6 +325,7 @@ async def get_resume_creation_stats(
         get_job_application_service
     ),
 ):
+    """Get statistics for resume creation for the current user."""
     try:
         stats = job_application_service.get_stats(current_user.id)
         return stats
@@ -316,6 +337,8 @@ async def get_resume_creation_stats(
 
 
 class UpdateResumeRequest(BaseModel):
+    """Request model for updating a generated resume."""
+
     resume: Resume
 
 
@@ -328,6 +351,7 @@ async def update_generated_resume(
         get_job_application_service
     ),
 ):
+    """Update the generated resume for a job application."""
     try:
         job_application = job_application_service.get_user_job_application(
             application_id, current_user.id, refresh=True
@@ -353,6 +377,8 @@ async def update_generated_resume(
 
 
 class UpdateCoverLetterRequest(BaseModel):
+    """Request model for updating a generated cover letter."""
+
     cover_letter_content: str
 
 
@@ -365,6 +391,7 @@ async def update_generated_cover_letter(
         get_job_application_service
     ),
 ):
+    """Update the generated cover letter for a job application."""
     try:
         job_application = job_application_service.get_user_job_application(
             application_id, current_user.id, refresh=True
@@ -397,6 +424,7 @@ async def delete_job_application(
         get_job_application_service
     ),
 ):
+    """Delete a job application."""
     try:
         job_application = job_application_service.get_user_job_application(
             application_id, current_user.id, refresh=True
@@ -420,6 +448,7 @@ async def get_job_application(
         get_job_application_service
     ),
 ):
+    """Get a job application by ID."""
     try:
         job_application = job_application_service.get_user_job_application(
             application_id, current_user.id, refresh=True

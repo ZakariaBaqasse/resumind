@@ -1,7 +1,12 @@
+"""Repository module for Event model database operations.
+
+This module provides EventRepository class for managing CRUD operations
+on Event entities linked to job applications.
+"""
+
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
 
 from sqlalchemy import delete as sa_delete
 from sqlmodel import Session, select
@@ -10,21 +15,24 @@ from src.job_applications.model import Event
 
 
 class EventRepository:
-    """
-    Repository for handling Event model database operations.
+    """Repository for handling Event model database operations.
+
     Events are linked to job applications and are typically fetched by job_application_id.
     """
 
     def __init__(self, session: Session):
+        """Initialize the EventRepository with a database session."""
         self.session = session
 
     # Create operations
     def create(self, event: Event) -> Event:
+        """Create a new event in the database."""
         self.session.add(event)
         self.session.commit()
         return self.get_by_id(event.id)
 
-    def create_many(self, events: List[Event]) -> List[Event]:
+    def create_many(self, events: list[Event]) -> list[Event]:
+        """Create multiple events in the database."""
         if not events:
             return []
         self.session.add_all(events)
@@ -33,7 +41,8 @@ class EventRepository:
         return [self.get_by_id(e.id) for e in events if e.id is not None]  # defensive
 
     # Read operations
-    def get_by_id(self, event_id: str) -> Optional[Event]:
+    def get_by_id(self, event_id: str) -> Event | None:
+        """Fetch an event by its ID."""
         stmt = select(Event).where(Event.id == event_id)
         res = self.session.exec(stmt)
         return res.first()
@@ -42,19 +51,19 @@ class EventRepository:
         self,
         job_application_id: str,
         *,
-        event_name: Optional[str] = None,
-        step: Optional[str] = None,
-        status: Optional[str] = None,
-        category_name: Optional[str] = None,
-        tool_name: Optional[str] = None,
-        since: Optional[datetime] = None,
-        until: Optional[datetime] = None,
+        event_name: str | None = None,
+        step: str | None = None,
+        status: str | None = None,
+        category_name: str | None = None,
+        tool_name: str | None = None,
+        since: datetime | None = None,
+        until: datetime | None = None,
         limit: int = 200,
         offset: int = 0,
         ascending: bool = True,
-    ) -> List[Event]:
-        """
-        Fetch events for a job application with optional filters.
+    ) -> list[Event]:
+        """Fetch events for a job application with optional filters.
+
         Ordered by created_at (asc by default).
         """
         stmt = select(Event).where(Event.job_application_id == job_application_id)
@@ -85,7 +94,8 @@ class EventRepository:
         res = self.session.exec(stmt)
         return res.all()
 
-    def get_latest_by_step(self, job_application_id: str, step: str) -> Optional[Event]:
+    def get_latest_by_step(self, job_application_id: str, step: str) -> Event | None:
+        """Fetch the latest event for a job application and step."""
         stmt = (
             select(Event)
             .where(
@@ -100,8 +110,8 @@ class EventRepository:
 
     # Delete operations
     def delete_by_job_application(self, job_application_id: str) -> int:
-        """
-        Delete all events linked to a job application.
+        """Delete all events linked to a job application.
+
         Returns number of rows deleted.
         """
         result = self.session.exec(

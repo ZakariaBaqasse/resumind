@@ -1,3 +1,9 @@
+"""Module containing system prompts for resume content extraction.
+
+This module defines the system prompt used to instruct an AI model on how to
+extract and parse resume content into a structured format.
+"""
+
 extract_resume_content_system_prompt = """
 As an expert HR data analyst who specializes in resume parsing and candidate profile extraction, analyze the provided resume content and extract all relevant information into a structured format.
 

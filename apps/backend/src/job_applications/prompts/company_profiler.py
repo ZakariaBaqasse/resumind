@@ -1,3 +1,11 @@
+"""System prompts for the Company Profiler multi-agent system.
+
+This module contains the foundational prompts for:
+- company_discovery_system_prompt: Agent for discovering company digital properties
+- research_planner_system_prompt: Agent for creating data-driven research plans
+- research_executor_system_prompt: Agent for conducting targeted research
+- smart_scraper_summarizer_system_prompt: Agent for summarizing web content
+"""
 from src.core.constants import BLOCKED_SCRAPING_SITES
 
 company_discovery_system_prompt = """

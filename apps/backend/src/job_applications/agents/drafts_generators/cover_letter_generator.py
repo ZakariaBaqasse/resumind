@@ -1,6 +1,17 @@
+"""Cover Letter Generator Agent Module.
+
+This module provides the CoverLetterGeneratorAgent class that uses LangGraph to build
+an agentic workflow for generating and iteratively improving cover letters based on
+job descriptions, resumes, and company research results.
+
+Key components:
+- CoverLetterGeneratorState: State model for the agent workflow
+- CoverLetterGeneratorAgent: Main agent class with generator, evaluator, and finalization nodes
+"""
+
 import logging
 from datetime import date
-from typing import Any, Dict, Optional
+from typing import Any
 
 from langchain_core.messages import (
     HumanMessage,
@@ -38,34 +49,37 @@ logger = logging.getLogger(__name__)
 
 
 class CoverLetterGeneratorState(BaseModel):
+    """State model for the Cover Letter Generator agent workflow."""
+
     job_application_id: str
     job_role: str
     job_description: str
     company: str
-    research_results: Dict[str, Any]
+    research_results: dict[str, Any]
     generated_resume: Resume
     max_evaluations: int = 5
     current_evaluation: int = 0
-    generated_cover_letter: Optional[str] = None
-    evaluation_results: Optional[GeneratedCoverLetterEvaluation] = None
+    generated_cover_letter: str | None = None
+    evaluation_results: GeneratedCoverLetterEvaluation | None = None
     evaluation_grade_threshold: int = 90
 
 
 class CoverLetterGeneratorAgent:
+    """Agent class for generating and improving cover letters using LangGraph."""
+
     def __init__(
         self,
-        model: Optional[ChatMistralAI] = None,
+        model: ChatMistralAI | None = None,
         debug: bool = False,
         rate_limiter=None,
     ) -> None:
+        """Initialize the CoverLetterGeneratorAgent."""
         self.model = model or ChatMistralAI(model=MODEL_NAME, max_tokens=8192)
         self.debug = debug
         self.rate_limiter = RateLimiter(0.5)
 
     def build_graph(self, checkpointer=InMemorySaver()) -> CompiledStateGraph:
-        """
-        Build the graph for the Cover Letter generator agent.
-        """
+        """Build the graph for the Cover Letter generator agent."""
         try:
             builder = StateGraph(CoverLetterGeneratorState)
 
@@ -82,6 +96,7 @@ class CoverLetterGeneratorAgent:
             raise e
 
     async def generator(self, state: CoverLetterGeneratorState, config: RunnableConfig):
+        """Node function for generating an enhanced version of the cover letter."""
         try:
             with get_session_context() as session:
                 events_service = ServiceRegistry.get_events_service(session)
@@ -169,6 +184,7 @@ class CoverLetterGeneratorAgent:
             raise e
 
     async def evaluator(self, state: CoverLetterGeneratorState, config: RunnableConfig):
+        """Node function for evaluating the generated cover letter and suggesting improvements."""
         try:
             if state.current_evaluation >= state.max_evaluations:
                 return Command(goto="finalize_generation")
@@ -269,6 +285,7 @@ class CoverLetterGeneratorAgent:
     async def finalize_generation(
         self, state: CoverLetterGeneratorState, config: RunnableConfig
     ):
+        """Node function for finalizing the cover letter generation process."""
         try:
             with get_session_context() as session:
                 job_application_service = ServiceRegistry.get_job_application_service(

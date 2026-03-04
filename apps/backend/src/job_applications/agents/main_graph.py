@@ -1,5 +1,12 @@
+"""Main graph orchestrator for job application processing.
+
+This module contains the main graph agent that coordinates the workflow
+for processing job applications, including company profiling, resume generation,
+and cover letter generation.
+"""
+
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from langchain_mistralai import ChatMistralAI
 from langgraph.checkpoint.memory import InMemorySaver
@@ -24,30 +31,33 @@ logger = logging.getLogger(__name__)
 
 
 class MainGraphState(BaseModel):
+    """State model for the main graph agent."""
+
     job_application_id: str
     job_role: str
     job_description: str
     company: str
     original_resume_snapshot: Resume
-    research_results: Optional[Dict[str, Any]] = {}
-    generated_resume: Optional[Resume] = None
+    research_results: dict[str, Any] | None = {}
+    generated_resume: Resume | None = None
 
 
 class MainGraphAgent:
+    """Agent class for orchestrating the main graph workflow for job applications."""
+
     def __init__(
         self,
-        model: Optional[ChatMistralAI] = None,
+        model: ChatMistralAI | None = None,
         debug: bool = False,
         rate_limiter=None,
     ) -> None:
+        """Initialize the MainGraphAgent."""
         self.model = model or ChatMistralAI(model=MODEL_NAME, max_tokens=8192)
         self.debug = debug
         self.rate_limiter = rate_limiter or RateLimiter(1.0)
 
     def build_graph(self, checkpointer=InMemorySaver()) -> CompiledStateGraph:
-        """
-        Build the main orchestrator graph for Resumind.
-        """
+        """Build the main orchestrator graph for Resumind."""
         try:
             builder = StateGraph(MainGraphState)
             company_profiler = CompanyProfilerAgent(

@@ -1,8 +1,15 @@
+"""Tests for job application tools.
+
+This module contains unit tests for the scraping_tool functionality,
+verifying that it correctly extracts and returns data from web pages.
+"""
+
 import asyncio
 from src.job_applications.tools import scraping_tool
 
 
 def test_scraping_tool():
+    """Test the scraping_tool with a sample URL and data extraction instructions."""
     inputs = {
         "url": "https://lumenalta.com/careers/culture",
         "data_to_extract": [

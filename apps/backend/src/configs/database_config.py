@@ -1,3 +1,11 @@
+"""Database configuration and session management for SQLAlchemy/SQLModel.
+
+This module provides:
+- Database engine configuration with optimized connection pooling
+- Session management utilities (generator and context manager based)
+- Database initialization with schema creation
+"""
+
 import contextlib
 import logging
 import os
@@ -49,8 +57,8 @@ engine = create_engine(
 
 
 def get_session():
-    """
-    Creates and yields a database session.
+    """Creates and yields a database session.
+
     To be used as a FastAPI dependency.
     """
     session = None
@@ -94,8 +102,7 @@ def get_session():
 
 @contextlib.contextmanager
 def get_session_context():
-    """
-    Context manager for database sessions.
+    """Context manager for database sessions.
 
     This provides a more reliable way to handle session lifecycle compared to
     the generator-based approach.
@@ -127,7 +134,7 @@ def get_session_context():
 
 
 def init_db():
-    """Initialize the database by creating schemas and tables"""
+    """Initialize the database by creating schemas and tables."""
     inspector = inspect(engine)
     schemas = inspector.get_schema_names()
     # Create app schema if it doesn't exist

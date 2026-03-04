@@ -1,3 +1,9 @@
+"""Dependency injection functions for job applications module.
+
+This module provides FastAPI dependencies for injecting service and repository
+instances with database sessions.
+"""
+
 from fastapi import Depends
 from sqlmodel import Session
 
@@ -9,14 +15,18 @@ from src.job_applications.services.job_application_service import JobApplication
 
 
 def get_job_application_repository(session: Session = Depends(get_session)):
+    """Dependency to get JobApplicationRepository instance.
+
+    This ensures that the repository is created with the current database session.
+    """
     return JobApplicationRepository(session)
 
 
 def get_job_application_service(
     session: Session = Depends(get_session),
 ) -> JobApplicationService:
-    """
-    Dependency to get JobApplicationService instance.
+    """Dependency to get JobApplicationService instance.
+
     This ensures that the service is created with the current database session.
     """
     from src.core.service_registry import ServiceRegistry

@@ -1,3 +1,9 @@
+"""User dependency injection module.
+
+This module provides dependency functions for FastAPI to inject UserRepository
+and UserService instances with proper database session management.
+"""
+
 from fastapi import Depends
 from sqlmodel import Session
 
@@ -7,12 +13,16 @@ from src.user.service import UserService
 
 
 def get_user_repository(session: Session = Depends(get_session)):
+    """Dependency to get UserRepository instance.
+
+    This ensures that the repository is created with the current database session.
+    """
     return UserRepository(session)
 
 
 def get_user_service(session: Session = Depends(get_session)) -> UserService:
-    """
-    Dependency to get UserService instance.
+    """Dependency to get UserService instance.
+    
     This ensures that the service is created with the current database session.
     """
     from src.core.service_registry import ServiceRegistry

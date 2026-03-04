@@ -1,8 +1,19 @@
+"""Research Executor Agent for Company Profiling.
+
+This module implements the ResearchExecutor agent that conducts research on companies
+by executing web search and scraping tools. It manages the research workflow through
+a state graph, handles tool invocations, and emits events for progress tracking.
+
+Key components:
+- ResearchExecutorState: State model maintaining research progress and results
+- ResearchExecutor: Agent that coordinates research execution and tool management
+"""
+
 import asyncio
 import logging
 import operator
 from datetime import date
-from typing import Annotated, Any, Dict, List, Optional
+from typing import Annotated, Any
 
 from langchain_core.messages import (
     BaseMessage,
@@ -40,32 +51,35 @@ logger = logging.getLogger(__name__)
 
 
 class ResearchExecutorState(BaseModel):
+    """State model for the Research Executor agent workflow."""
+
     job_application_id: str
     company: str
     job_role: str
-    messages: Annotated[List[BaseMessage], operator.add]
+    messages: Annotated[list[BaseMessage], operator.add]
     research_category: ResearchCategory
-    research_results: Dict[str, Any] = {}
+    research_results: dict[str, Any] = {}
     iteration: int = 0
     max_iterations: int = 7
     company_discovery_results: DiscoveredCompanyProfile
 
 
 class ResearchExecutor:
+    """Agent responsible for executing research tasks for company profiling."""
+
     def __init__(
         self,
-        model: Optional[ChatMistralAI] = None,
+        model: ChatMistralAI | None = None,
         debug: bool = False,
         rate_limiter=None,
     ) -> None:
+        """Initialize the ResearchExecutor agent."""
         self.model = model or ChatMistralAI(model=MODEL_NAME, max_tokens=8192)
         self.debug = debug
         self.rate_limiter = rate_limiter or RateLimiter(1.0)
 
     def build_graph(self, checkpointer=InMemorySaver()) -> CompiledStateGraph:
-        """
-        Build the graph for the Company profiler agent.
-        """
+        """Build the graph for the Research Executor agent."""
         try:
             builder = StateGraph(ResearchExecutorState)
             builder.add_node("research_executor", self.research_executor)
@@ -75,11 +89,12 @@ class ResearchExecutor:
             return builder.compile(checkpointer=checkpointer, debug=self.debug)
         except Exception as e:
             logger.error(
-                "Error building the graph for the company profiler", error=str(e)
+                "Error building the graph for the Research Executor agent", error=str(e)
             )
             raise e
 
     async def research_executor(self, state: ResearchExecutorState):
+        """Execute the research tasks for the Research Executor agent."""
         try:
             if state.iteration >= state.max_iterations:
                 return Command(
@@ -202,6 +217,7 @@ class ResearchExecutor:
             )
 
     async def run_research_tools(self, state: ResearchExecutorState):
+        """Run the research tools for the Research Executor agent."""
         try:
             tool_responses = await asyncio.gather(
                 *[
@@ -229,8 +245,9 @@ class ResearchExecutor:
             raise {"messages": []}
 
     async def process_tool_call_safely(
-        self, tool_call: Dict[str, Any], job_application_id: str
+        self, tool_call: dict[str, Any], job_application_id: str
     ):
+        """Process a tool call safely for the Research Executor agent."""
         try:
             tools = [tavily_tool, scraping_tool]
             tool_to_invoke = next(

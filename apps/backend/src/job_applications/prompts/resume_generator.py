@@ -1,3 +1,10 @@
+"""Module containing system prompts for resume generation and evaluation.
+
+This module provides specialized prompts for:
+- resume_generator_system_prompt: Instructions for generating optimized resumes
+- resume_evaluator_system_prompt: Framework for evaluating and scoring resumes
+"""
+
 resume_generator_system_prompt = """
 # ROLE
 You are an expert Career Strategist and Professional Resume Writer, specializing in ATS (Applicant Tracking System) optimization. You are a specialized component of the Resume Synthesizer Team and have reviewed thousands of resumes across industries. 

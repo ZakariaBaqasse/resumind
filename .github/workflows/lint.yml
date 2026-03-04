@@ -33,13 +33,13 @@ jobs:
         uses: astral-sh/ruff-action@v1
         with:
           args: "check"
-          src: "./apps/backend/app"
+          src: "./apps/backend/src"
 
       - name: Ruff format check
         uses: astral-sh/ruff-action@v1
         with:
           args: "format --check"
-          src: "./apps/backend/app"
+          src: "./apps/backend/src"
 
   backend-lint:
     name: Backend Lint & Type Check
@@ -63,7 +63,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: ~/.cache/uv
-          key: uv-${{ runner.os }}-${{ hashFiles('backend/uv.lock') }}
+          key: uv-${{ runner.os }}-${{ hashFiles('apps/backend/uv.lock') }}
           restore-keys: |
             uv-${{ runner.os }}-
 

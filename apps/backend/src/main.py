@@ -1,3 +1,8 @@
+"""Main FastAPI application module.
+
+This module sets up the FastAPI application with CORS middleware and includes
+routers for authentication, user management, and job applications.
+"""
 import logging
 import os
 
@@ -36,5 +41,4 @@ app.include_router(job_application_router)
 @app.get("/health", tags=["Health"])
 def status_check() -> dict[str, str]:
     """A basic function to perform a status check on the API."""
-
     return {"status": "ok", "version": "0.0.1"}

@@ -114,7 +114,7 @@ export type JobApplicationSnapshot = {
   resume_generation_status?: ResumeGenerationStatus | null
   company_profile?: CompanyProfile | null
   generated_resume?: Resume
-  resume_strategy_brief?: ResumeStrategyBrief | null
+  resume_strategy_brief?: ResumeStrategyBrief
   original_resume_snapshot?: Resume
   generated_cover_letter?: string
   created_at?: string | null

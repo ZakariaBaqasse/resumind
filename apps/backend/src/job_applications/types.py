@@ -30,7 +30,7 @@ class ResumeGenerationStatus(Enum):
     FAILED = "failed"
 
 
-class EventStatus(str, Enum):
+class EventStatus(Enum):
     """Enum representing the status of an event."""
 
     STARTED = "started"
@@ -38,7 +38,7 @@ class EventStatus(str, Enum):
     FAILED = "failed"
 
 
-class EventName(str, Enum):
+class EventName(Enum):
     """Enum representing the name of an event."""
 
     PIPELINE_UPDATE = "pipeline.update"
@@ -50,7 +50,7 @@ class EventName(str, Enum):
     PIPELINE_FAILED = "pipeline.failed"
 
 
-class PipelineStep(str, Enum):
+class PipelineStep(Enum):
     """Enum representing the steps in the job application processing pipeline."""
 
     RESUME_GENERATION = "resume_generation"

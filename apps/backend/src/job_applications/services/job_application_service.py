@@ -161,7 +161,7 @@ class JobApplicationService:
                 job_application.company_profile = {}
 
             job_application.company_profile["company_discovery_results"] = (
-                discovery_results.model_dump()
+                discovery_results.model_dump(mode="json")
             )
             flag_modified(job_application, "company_profile")
             return self.job_application_repository.update(job_application)
@@ -183,8 +183,8 @@ class JobApplicationService:
             if not job_application.company_profile:
                 job_application.company_profile = {}
 
-            job_application.company_profile["research_plan"] = (
-                research_plan.model_dump()
+            job_application.company_profile["research_plan"] = research_plan.model_dump(
+                mode="json"
             )
             flag_modified(job_application, "company_profile")
             return self.job_application_repository.update(job_application)
@@ -269,7 +269,7 @@ class JobApplicationService:
             )
             if not job_application:
                 raise Exception("No job application found with the given ID")
-            job_application.generated_resume = generated_resume.model_dump()
+            job_application.generated_resume = generated_resume.model_dump(mode="json")
             return self.update_job_application(job_application)
         except Exception as e:
             logger.error(
@@ -287,7 +287,9 @@ class JobApplicationService:
             )
             if not job_application:
                 raise Exception("No job application found with the given ID")
-            job_application.resume_strategy_brief = strategy_brief.model_dump()
+            job_application.resume_strategy_brief = strategy_brief.model_dump(
+                mode="json"
+            )
             return self.update_job_application(job_application)
         except Exception as e:
             logger.error(

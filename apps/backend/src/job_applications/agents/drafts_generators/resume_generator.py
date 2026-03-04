@@ -143,6 +143,11 @@ class ResumeGeneratorAgent:
                 response: ResumeGenerationOutput = await retry_with_backoff(
                     lambda: configured_model.ainvoke(messages)
                 )
+            if response is None:
+                raise ValueError(
+                    "Structured output model returned None — the LLM failed to produce "
+                    "a valid ResumeGenerationOutput response."
+                )
             with get_session_context() as session:
                 event_service = ServiceRegistry.get_events_service(session)
                 event_service.emit_pipeline_step(

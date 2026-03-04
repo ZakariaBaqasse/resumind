@@ -156,7 +156,7 @@ app.conf.update(
 @task_failure.connect
 def on_task_failure(sender=None, task_id=None, exception=None, einfo=None, **kwargs):
     """Handle task failure events and log detailed error information."""
-    logger.error("Task failed", task_id=task_id, exception=str(exception))
+    logger.error("Task failed — task_id=%s exception=%s", task_id, str(exception))
 
 
 if __name__ == "__main__":

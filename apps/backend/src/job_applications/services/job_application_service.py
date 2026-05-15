@@ -91,6 +91,17 @@ class JobApplicationService:
         """
         return self.job_application_repository.get_all()
 
+    def count_job_applications(self, user_id: str) -> int:
+        """Count all job applications for a given user.
+
+        Args:
+            user_id: The ID of the user whose applications should be counted
+
+        Returns:
+            The total number of job applications for the user
+        """
+        return self.job_application_repository.count_by_user(user_id)
+
     def list_paginated(
         self, user_id: str, offset: int = 0, limit: int = 30
     ) -> tuple[list[JobApplication], int]:

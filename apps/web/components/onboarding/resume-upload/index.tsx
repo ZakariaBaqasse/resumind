@@ -215,6 +215,22 @@ export default function ResumeUpload() {
           <p className="text-xs text-gray-500">
             Your data is secure and encrypted. We never share your information.
           </p>
+          <p className="text-xs text-gray-500 mt-2">
+            🎁 You get{" "}
+            <span className="font-semibold text-gray-700">
+              one free resume generation
+            </span>{" "}
+            after signup. Want unlimited generations?{" "}
+            <a
+              href="https://github.com/ZakariaBaqasse/resumind"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline hover:text-blue-800"
+            >
+              Run it yourself on GitHub
+            </a>
+            .
+          </p>
         </div>
       </div>
     </div>

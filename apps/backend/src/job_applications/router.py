@@ -69,8 +69,19 @@ def start_application_resume_generation(
 
     This endpoint creates a new job application record and triggers the asynchronous
     resume generation workflow via a Celery task.
+
+    Free-tier users are limited to one resume generation. A 403 is returned if the
+    user has already created at least one job application.
     """
     try:
+        existing_count = job_application_service.count_job_applications(
+            current_user.id
+        )
+        if existing_count >= 1:
+            raise HTTPException(
+                status_code=403,
+                detail="free_tier_limit_reached",
+            )
         job_application = job_application_service.create_job_application(
             JobApplication(
                 job_description=application_data.job_description,

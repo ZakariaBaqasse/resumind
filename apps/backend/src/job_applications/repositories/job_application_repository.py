@@ -92,6 +92,20 @@ class JobApplicationRepository:
         results = self.session.exec(statement)
         return results.all()
 
+    def count_by_user(self, user_id: str) -> int:
+        """Count all job applications for a given user.
+
+        Args:
+            user_id: The ID of the user whose applications should be counted
+
+        Returns:
+            The total number of job applications for the user
+        """
+        statement = select(func.count(JobApplication.id)).where(
+            JobApplication.user_id == user_id
+        )
+        return self.session.exec(statement).one()
+
     def list_paginated(
         self, user_id: str, offset: int = 0, limit: int = 30
     ) -> tuple[list[JobApplication], int]:
